@@ -61,7 +61,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Green Wheels color scheme
+				greenprimary: '#28B463',
+				greenaccent: '#F7DC6F',
+				graydark: '#2C3E50',
+				graylight: '#ECF0F1',
+				error: '#E74C3C'
+			},
+			fontFamily: {
+				poppins: ['Poppins', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +93,47 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'slideIn': {
+					'0%': { transform: 'translateX(-20px)', opacity: '0' },
+					'100%': { transform: 'translateX(0)', opacity: '1' }
+				},
+				'slideUp': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
+				'fadeIn': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
+				},
+				'pulse': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
+				},
+				'spin': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
+				},
+				'scale': {
+					'0%': { transform: 'scale(0.95)', opacity: '0' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'qrScan': {
+					'0%': { top: '0%', height: '5%' },
+					'50%': { top: '50%', height: '5%' },
+					'100%': { top: '95%', height: '5%' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'slide-in': 'slideIn 0.3s ease-out forwards',
+				'slide-up': 'slideUp 0.3s ease-out forwards',
+				'fade-in': 'fadeIn 0.5s ease-out forwards',
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'spin': 'spin 1s linear infinite',
+				'scale': 'scale 0.3s ease-out forwards',
+				'qr-scan': 'qrScan 2s ease-in-out infinite'
 			}
 		}
 	},
