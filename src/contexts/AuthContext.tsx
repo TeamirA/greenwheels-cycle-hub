@@ -46,11 +46,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [authState]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in a real app this would call an API
-    // For this demo, any password will work if the email matches a user
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (user) {
+    // Simple demo sign-in: allow any email with password > 8 characters
+    if (email.trim() !== '' && password.length > 8) {
+      // Default to 'user' role if no matching mock user found
+      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || {
+        id: 'demo-user',
+        name: 'Demo User',
+        email: email,
+        role: 'user',
+        verified: true,
+        createdAt: new Date().toISOString()
+      };
+
       setAuthState({
         user,
         isAuthenticated: true,
