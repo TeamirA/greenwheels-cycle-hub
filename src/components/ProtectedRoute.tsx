@@ -18,15 +18,27 @@ const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
+  // If no specific roles are required, allow access
+  if (!roles || roles.length === 0) {
+    return <>{children}</>;
+  }
+
   // Check role-based access
-  if (roles && !isAuthorized(roles)) {
-    // Redirect to unauthorized or dashboard based on user role
+  if (!isAuthorized(roles)) {
+    // Determine where to redirect based on user role
+    let redirectPath = '/';
+    
     if (authState.role === 'admin') {
-      return <Navigate to="/admin-dashboard" replace />;
+      redirectPath = '/admin-dashboard';
     } else if (authState.role === 'staff') {
-      return <Navigate to="/staff-panel" replace />;
-    } else {
-      return <Navigate to="/unauthorized" replace />;
+      redirectPath = '/staff-panel';
+    } else if (authState.role === 'user') {
+      redirectPath = '/'; // Regular users go to home page
+    }
+    
+    // Only redirect to unauthorized if trying to access a page not suitable for their role
+    if (location.pathname !== redirectPath) {
+      return <Navigate to={redirectPath} replace />;
     }
   }
 

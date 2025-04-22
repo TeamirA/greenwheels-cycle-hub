@@ -5,10 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bike } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, authState } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -18,7 +18,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const from = location.state?.from || '/admin-dashboard';
+  // Get the path the user was trying to access, or default to their role-appropriate dashboard
+  const from = location.state?.from || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,18 @@ const Login = () => {
           description: 'Welcome to GreenWheels!',
           variant: 'default',
         });
-        navigate(from, { replace: true });
+        
+        // Determine where to redirect based on user role
+        let redirectPath = from;
+        if (from === '/') {
+          if (authState.role === 'admin') {
+            redirectPath = '/admin-dashboard';
+          } else if (authState.role === 'staff') {
+            redirectPath = '/staff-panel';
+          }
+        }
+        
+        navigate(redirectPath, { replace: true });
       } else {
         setError('Invalid email or password');
       }
