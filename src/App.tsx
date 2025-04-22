@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,9 @@ import UserManagement from "./pages/UserManagement";
 import Reports from "./pages/Reports";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
+import BikeFleet from "./pages/BikeFleet";
+import ActiveRides from "./pages/ActiveRides";
+import AvailableBikes from "./pages/AvailableBikes";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +74,38 @@ const App = () => (
                 <ProtectedRoute roles={['admin']}>
                   <MainLayout>
                     <Reports />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* New Detail Routes */}
+            <Route 
+              path="/bike-fleet" 
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <MainLayout>
+                    <BikeFleet />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/active-rides" 
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <MainLayout>
+                    <ActiveRides />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/available-bikes" 
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <MainLayout>
+                    <AvailableBikes />
                   </MainLayout>
                 </ProtectedRoute>
               } 

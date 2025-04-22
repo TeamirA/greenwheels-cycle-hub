@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bike, MapPin, Users, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DashboardCard from '@/components/ui/dashboard-card';
 import BikeStatusBadge from '@/components/ui/bike-status-badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 const AdminDashboard = () => {
   const { authState } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [bikeSummary, setBikeSummary] = useState(getBikeSummary());
   const [stationSummary, setStationSummary] = useState(getStationSummary());
   const [maintenanceSummary, setMaintenanceSummary] = useState(getMaintenanceSummary());
@@ -94,6 +96,26 @@ const AdminDashboard = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Handle card clicks - navigate to detail pages
+  const handleCardClick = (type: string) => {
+    switch (type) {
+      case 'allBikes':
+        navigate('/bike-fleet');
+        break;
+      case 'inUseBikes':
+        navigate('/active-rides');
+        break;
+      case 'availableBikes':
+        navigate('/available-bikes');
+        break;
+      case 'stations':
+        navigate('/station-management');
+        break;
+      default:
+        break;
+    }
+  };
+
   // Handle export to CSV
   const handleExportCSV = () => {
     toast({
@@ -133,36 +155,44 @@ const AdminDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardCard 
-          title="Total Bikes" 
-          value={bikeSummary.totalBikes} 
-          icon={<Bike size={24} className="text-greenprimary" />}
-          color="var(--greenprimary)"
-          loading={loading}
-        />
-        <DashboardCard 
-          title="Bikes in Use" 
-          value={bikeSummary.inUseBikes}
-          trend={`${Math.round((bikeSummary.inUseBikes / bikeSummary.totalBikes) * 100)}% of fleet`}
-          icon={<Bike size={24} className="text-greenaccent" />}
-          color="var(--greenaccent)"
-          loading={loading}
-        />
-        <DashboardCard 
-          title="Available Bikes" 
-          value={bikeSummary.availableBikes}
-          icon={<Bike size={24} className="text-greenprimary" />}
-          color="var(--greenprimary)"
-          loading={loading}
-        />
-        <DashboardCard 
-          title="Docking Stations" 
-          value={stationSummary.totalStations}
-          trend={`${stationSummary.utilization}% capacity utilization`}
-          icon={<MapPin size={24} className="text-graydark" />}
-          color="var(--graydark)"
-          loading={loading}
-        />
+        <div onClick={() => handleCardClick('allBikes')} className="cursor-pointer hover:scale-105 transition-transform">
+          <DashboardCard 
+            title="Total Bikes" 
+            value={bikeSummary.totalBikes} 
+            icon={<Bike size={24} className="text-greenprimary" />}
+            color="var(--greenprimary)"
+            loading={loading}
+          />
+        </div>
+        <div onClick={() => handleCardClick('inUseBikes')} className="cursor-pointer hover:scale-105 transition-transform">
+          <DashboardCard 
+            title="Bikes in Use" 
+            value={bikeSummary.inUseBikes}
+            trend={`${Math.round((bikeSummary.inUseBikes / bikeSummary.totalBikes) * 100)}% of fleet`}
+            icon={<Bike size={24} className="text-greenaccent" />}
+            color="var(--greenaccent)"
+            loading={loading}
+          />
+        </div>
+        <div onClick={() => handleCardClick('availableBikes')} className="cursor-pointer hover:scale-105 transition-transform">
+          <DashboardCard 
+            title="Available Bikes" 
+            value={bikeSummary.availableBikes}
+            icon={<Bike size={24} className="text-greenprimary" />}
+            color="var(--greenprimary)"
+            loading={loading}
+          />
+        </div>
+        <div onClick={() => handleCardClick('stations')} className="cursor-pointer hover:scale-105 transition-transform">
+          <DashboardCard 
+            title="Docking Stations" 
+            value={stationSummary.totalStations}
+            trend={`${stationSummary.utilization}% capacity utilization`}
+            icon={<MapPin size={24} className="text-graydark" />}
+            color="var(--graydark)"
+            loading={loading}
+          />
+        </div>
       </div>
 
       {/* Bike Inventory Table */}
