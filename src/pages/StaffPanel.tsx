@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -130,7 +131,7 @@ const StaffPanel = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bike Check-in Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <BikeIcon className="mr-2" size={20} />
             Reservation Verification
@@ -139,7 +140,7 @@ const StaffPanel = () => {
           {!bikeDetails ? (
             <div className="space-y-4">
               <div>
-                <label htmlFor="reservation-code" className="block text-sm font-medium mb-1 text-graydark">
+                <label htmlFor="reservation-code" className="block text-sm font-medium mb-1 text-graydark dark:text-gray-300">
                   Enter Reservation Code
                 </label>
                 <div className="flex gap-2">
@@ -173,7 +174,7 @@ const StaffPanel = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-4 bg-graylight p-4 rounded-lg animate-fade-in">
+            <div className="space-y-4 bg-graylight p-4 rounded-lg animate-fade-in dark:bg-gray-700">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Bike Details</h3>
                 <Button variant="outline" size="sm" onClick={() => setBikeDetails(null)}>
@@ -183,30 +184,30 @@ const StaffPanel = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">ID</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID</p>
                   <p className="font-medium">{bikeDetails.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Model</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Model</p>
                   <p className="font-medium">{bikeDetails.model}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Category</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Category</p>
                   <p className="font-medium capitalize">{bikeDetails.category}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Status</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                   <p className="font-medium capitalize">{bikeDetails.status.replace('-', ' ')}</p>
                 </div>
               </div>
               
               <div className="pt-2">
-                <p className="text-sm text-gray-500">User</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">User</p>
                 <p className="font-medium">{bikeDetails.userName} (ID: {bikeDetails.userId})</p>
               </div>
               
               <div className="pt-2">
-                <p className="text-sm text-gray-500">Reservation</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Reservation</p>
                 <p className="font-medium">
                   {bikeDetails.reservation.id} 
                   {bikeDetails.reservation.code && ` (Code: ${bikeDetails.reservation.code})`}
@@ -223,11 +224,11 @@ const StaffPanel = () => {
         </div>
         
         {/* Actions Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors"
+            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
                  onClick={handleNavigateToReservations}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium">Reservations</h3>
@@ -235,41 +236,41 @@ const StaffPanel = () => {
                   {reservations.filter(r => r.status === 'active').length}
                 </span>
               </div>
-              <p className="text-sm text-gray-500">Manage active reservations</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Manage active reservations</p>
             </div>
             
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors"
+            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
                  onClick={handleNavigateToMaintenance}>
               <h3 className="font-medium mb-2">Maintenance</h3>
-              <p className="text-sm text-gray-500">Report bike issues</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Report bike issues</p>
             </div>
             
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors"
+            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
                  onClick={() => navigate('/active-rides')}>
               <h3 className="font-medium mb-2">Active Rides</h3>
-              <p className="text-sm text-gray-500">Monitor ongoing rentals</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Monitor ongoing rentals</p>
             </div>
             
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors"
+            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
                  onClick={() => navigate('/available-bikes')}>
               <h3 className="font-medium mb-2">Available Bikes</h3>
-              <p className="text-sm text-gray-500">Check bike availability</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Check bike availability</p>
             </div>
           </div>
         </div>
       </div>
       
       {/* Active Bikes Map */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Active Bikes by Station</h2>
           
           <div className="flex items-center">
-            <MapPin size={18} className="mr-1 text-graydark" />
+            <MapPin size={18} className="mr-1 text-graydark dark:text-gray-300" />
             <select
               value={selectedStation.id}
               onChange={(e) => setSelectedStation(stations.find(s => s.id === e.target.value) || stations[0])}
-              className="border rounded p-1 text-sm focus:outline-none focus:ring-2"
+              className="border rounded p-1 text-sm focus:outline-none focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
             >
               {stations.map((station) => (
                 <option key={station.id} value={station.id}>
@@ -291,24 +292,24 @@ const StaffPanel = () => {
             {stationBikes.length > 0 ? (
               <ul className="space-y-2">
                 {stationBikes.map((bike) => (
-                  <li key={bike.id} className="p-3 bg-graylight rounded-md hover:bg-graylight/80 cursor-pointer">
+                  <li key={bike.id} className="p-3 bg-graylight rounded-md hover:bg-graylight/80 cursor-pointer dark:bg-gray-700 dark:hover:bg-gray-600">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{bike.model}</p>
-                        <p className="text-sm text-gray-500">ID: {bike.id}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">ID: {bike.id}</p>
                       </div>
                       {bike.category === 'scooter' ? (
-                        <Car className="text-graydark" size={20} />
+                        <Car className="text-graydark dark:text-gray-300" size={20} />
                       ) : (
-                        <BikeIcon className="text-graydark" size={20} />
+                        <BikeIcon className="text-graydark dark:text-gray-300" size={20} />
                       )}
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs">{bike.category}</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${bike.status === 'available' ? 'bg-greenprimary/20 text-greenprimary' : 
-                          bike.status === 'in-use' ? 'bg-greenaccent/30 text-graydark' : 
-                          'bg-error/20 text-error'}`}
+                        ${bike.status === 'available' ? 'bg-greenprimary/20 text-greenprimary dark:bg-greenprimary/40 dark:text-white' : 
+                          bike.status === 'in-use' ? 'bg-greenaccent/30 text-graydark dark:bg-greenaccent/50 dark:text-white' : 
+                          'bg-error/20 text-error dark:bg-error/50 dark:text-white'}`}
                       >
                         {bike.status.replace('-', ' ')}
                       </span>
@@ -317,14 +318,14 @@ const StaffPanel = () => {
                 ))}
               </ul>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 No bikes at this station
               </div>
             )}
           </div>
           
           {/* Map */}
-          <div className="lg:col-span-2 h-[300px] bg-graylight rounded-lg overflow-hidden">
+          <div className="lg:col-span-2 h-[300px] bg-graylight rounded-lg overflow-hidden dark:bg-gray-700">
             <StationMap 
               stations={stations} 
               selectedStation={selectedStation} 
