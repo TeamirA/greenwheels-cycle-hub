@@ -1,11 +1,10 @@
-
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { maintenanceReports, bikes, commonIssues } from '@/data/mockData';
 import { MaintenanceReport, Bike } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tool, Filter, Search, Plus, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Wrench, Filter, Search, Plus, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,21 +21,17 @@ const MaintenanceIssues = () => {
 
   const availableBikes = bikes.filter(bike => bike.status !== 'maintenance');
 
-  // Filter maintenance reports based on search and filters
   const filteredReports = useMemo(() => {
     let results = maintenanceReports;
     
-    // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(report => report.status === statusFilter);
     }
     
-    // Apply priority filter
     if (priorityFilter !== 'all') {
       results = results.filter(report => report.priority === priorityFilter);
     }
     
-    // Apply search term filter
     if (searchTerm) {
       const lowercasedFilter = searchTerm.toLowerCase();
       results = results.filter(
@@ -50,7 +45,6 @@ const MaintenanceIssues = () => {
     return results;
   }, [searchTerm, statusFilter, priorityFilter]);
 
-  // Form for new maintenance issue
   const form = useForm({
     defaultValues: {
       bikeId: '',
@@ -60,7 +54,6 @@ const MaintenanceIssues = () => {
     }
   });
 
-  // Handle submit new issue
   const handleNewIssue = (data: any) => {
     toast({
       title: 'Maintenance Issue Reported',
@@ -71,7 +64,6 @@ const MaintenanceIssues = () => {
     form.reset();
   };
 
-  // Handle update report status
   const handleUpdateStatus = (id: string, newStatus: 'pending' | 'in-progress' | 'resolved') => {
     toast({
       title: 'Status Updated',
@@ -94,7 +86,6 @@ const MaintenanceIssues = () => {
         </Button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -136,11 +127,10 @@ const MaintenanceIssues = () => {
         </div>
       </div>
 
-      {/* Maintenance Reports List */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b border-graylight">
           <h2 className="text-lg font-semibold flex items-center">
-            <Tool className="mr-2" size={18} />
+            <Wrench className="mr-2" size={18} />
             Maintenance Issues
           </h2>
         </div>
@@ -213,7 +203,7 @@ const MaintenanceIssues = () => {
                         className="flex items-center"
                         onClick={() => handleUpdateStatus(report.id, 'in-progress')}
                       >
-                        <Tool className="mr-1" size={14} />
+                        <Wrench className="mr-1" size={14} />
                         Start Work
                       </Button>
                     )}
@@ -245,7 +235,6 @@ const MaintenanceIssues = () => {
         )}
       </div>
 
-      {/* New Issue Dialog */}
       <Dialog open={showNewIssueDialog} onOpenChange={setShowNewIssueDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>

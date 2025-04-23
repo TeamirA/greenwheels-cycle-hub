@@ -21,6 +21,7 @@ export interface Bike {
   lastMaintenance: string;
   totalRides: number;
   category: BikeCategory;
+  batteryPercentage?: number; // Add this property as optional
 }
 
 export interface Station {

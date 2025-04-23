@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
 import { bikes, reservations, stations, getUserById } from '@/data/mockData';
-import { Bike as BikeIcon, MapPin, Search, Scooter } from 'lucide-react';
+import { Bike as BikeIcon, MapPin, Search, Scooter, Car } from 'lucide-react';
 import StationMap from '@/components/StationMap';
 
 const StaffPanel = () => {
@@ -299,7 +298,7 @@ const StaffPanel = () => {
                         <p className="text-sm text-gray-500">ID: {bike.id}</p>
                       </div>
                       {bike.category === 'scooter' ? 
-                        <Scooter className="text-graydark" size={20} /> : 
+                        <Car className="text-graydark" size={20} /> : 
                         <BikeIcon className="text-graydark" size={20} />
                       }
                     </div>

@@ -1,11 +1,10 @@
-
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   LayoutDashboard, Bike, MapPin, Users, FileText, 
   LogOut, Menu, X, ChevronDown, ChevronLeft, ChevronRight,
-  ListCheck, Tool, UserPlus, PlusCircle, Scooter
+  ListCheck, Wrench, UserPlus, PlusCircle, Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +26,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     navigate('/login');
   };
 
-  // Navigation links based on user role
   const getNavLinks = () => {
     if (authState.role === 'admin') {
       return [
@@ -35,7 +33,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         { name: 'Bike Fleet', path: '/bike-fleet', icon: <Bike size={20} /> },
         { name: 'Stations', path: '/station-management', icon: <MapPin size={20} /> },
         { name: 'Users', path: '/user-management', icon: <Users size={20} /> },
-        { name: 'Active Rides', path: '/active-rides', icon: <Scooter size={20} /> },
+        { name: 'Active Rides', path: '/active-rides', icon: <Car size={20} /> },
         { name: 'Available Bikes', path: '/available-bikes', icon: <Bike size={20} /> },
         { name: 'Reports', path: '/reports', icon: <FileText size={20} /> },
         { name: 'Register User', path: '/register-user', icon: <UserPlus size={20} /> },
@@ -46,8 +44,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       return [
         { name: 'Staff Panel', path: '/staff-panel', icon: <LayoutDashboard size={20} /> },
         { name: 'Reservations', path: '/reservations', icon: <ListCheck size={20} /> },
-        { name: 'Maintenance', path: '/maintenance-issues', icon: <Tool size={20} /> },
-        { name: 'Active Rides', path: '/active-rides', icon: <Scooter size={20} /> },
+        { name: 'Maintenance', path: '/maintenance-issues', icon: <Wrench size={20} /> },
+        { name: 'Active Rides', path: '/active-rides', icon: <Car size={20} /> },
         { name: 'Available Bikes', path: '/available-bikes', icon: <Bike size={20} /> },
       ];
     }
@@ -58,7 +56,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-graylight flex flex-col">
-      {/* Header */}
       <header className="bg-greenprimary text-white shadow-md z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
@@ -76,7 +73,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </Link>
           </div>
 
-          {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-6">
             {authState.isAuthenticated ? (
               <>
@@ -108,10 +104,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </header>
 
       <div className="flex flex-1">
-        {/* Sidebar - only show if authenticated */}
         {authState.isAuthenticated && (
           <>
-            {/* Mobile sidebar */}
             <div 
               className={cn(
                 "fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden transition-opacity",
@@ -165,7 +159,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </>
         )}
 
-        {/* Main content */}
         <main className={cn(
           "flex-1 p-6",
           authState.isAuthenticated ? "md:ml-0" : ""
