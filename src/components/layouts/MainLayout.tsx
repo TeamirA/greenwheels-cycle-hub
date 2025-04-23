@@ -4,7 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   LayoutDashboard, Bike, MapPin, Users, FileText, 
-  LogOut, Menu, X, ChevronDown 
+  LogOut, Menu, X, ChevronDown, ChevronLeft, ChevronRight,
+  ListCheck, Tool, UserPlus, PlusCircle, Scooter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -30,15 +32,23 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     if (authState.role === 'admin') {
       return [
         { name: 'Dashboard', path: '/admin-dashboard', icon: <LayoutDashboard size={20} /> },
-        { name: 'Bikes', path: '/bikes', icon: <Bike size={20} /> },
+        { name: 'Bike Fleet', path: '/bike-fleet', icon: <Bike size={20} /> },
         { name: 'Stations', path: '/station-management', icon: <MapPin size={20} /> },
         { name: 'Users', path: '/user-management', icon: <Users size={20} /> },
+        { name: 'Active Rides', path: '/active-rides', icon: <Scooter size={20} /> },
+        { name: 'Available Bikes', path: '/available-bikes', icon: <Bike size={20} /> },
         { name: 'Reports', path: '/reports', icon: <FileText size={20} /> },
+        { name: 'Register User', path: '/register-user', icon: <UserPlus size={20} /> },
+        { name: 'Register Bike', path: '/register-bike', icon: <PlusCircle size={20} /> },
+        { name: 'Create Station', path: '/create-station', icon: <MapPin size={20} /> },
       ];
     } else if (authState.role === 'staff') {
       return [
         { name: 'Staff Panel', path: '/staff-panel', icon: <LayoutDashboard size={20} /> },
-        { name: 'Reservations', path: '/reservations', icon: <FileText size={20} /> },
+        { name: 'Reservations', path: '/reservations', icon: <ListCheck size={20} /> },
+        { name: 'Maintenance', path: '/maintenance-issues', icon: <Tool size={20} /> },
+        { name: 'Active Rides', path: '/active-rides', icon: <Scooter size={20} /> },
+        { name: 'Available Bikes', path: '/available-bikes', icon: <Bike size={20} /> },
       ];
     }
     return [];
@@ -49,20 +59,22 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-graylight flex flex-col">
       {/* Header */}
-      <header className="bg-greenprimary text-white shadow-md">
+      <header className="bg-greenprimary text-white shadow-md z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <Bike className="h-8 w-8" />
-            <span className="text-xl font-bold">GreenWheels</span>
-          </Link>
-
-          {/* Mobile menu button */}
-          <button 
-            className="md:hidden p-2 rounded-md hover:bg-greenprimary/80"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center">
+            {authState.isAuthenticated && (
+              <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="md:hidden p-2 rounded-md hover:bg-greenprimary/80 mr-2"
+              >
+                {isOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            )}
+            <Link to="/" className="flex items-center space-x-2">
+              <Bike className="h-8 w-8" />
+              <span className="text-xl font-bold">GreenWheels</span>
+            </Link>
+          </div>
 
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-6">
@@ -89,9 +101,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             ) : (
               <>
                 <Link to="/login" className="hover:underline">Sign in</Link>
-                <Link to="/signup" className="bg-white text-greenprimary px-4 py-2 rounded-md hover:bg-gray-100 transition">
-                  Sign up
-                </Link>
               </>
             )}
           </div>
@@ -113,10 +122,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             
             <aside 
               className={cn(
-                "w-64 bg-white shadow-lg fixed inset-y-0 left-0 transform transition-transform z-30 mt-14 md:mt-0 md:static md:translate-x-0",
-                isOpen ? "translate-x-0" : "-translate-x-full"
+                "bg-white shadow-lg fixed inset-y-0 left-0 transform transition-all z-30 mt-14 md:mt-0 md:static",
+                isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+                isSidebarCollapsed ? "w-16" : "w-64"
               )}
             >
+              <div className="flex justify-end p-2">
+                <button 
+                  onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+                  className="hidden md:flex p-1 rounded-md hover:bg-graylight text-graydark"
+                >
+                  {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                </button>
+              </div>
               <nav className="p-4 space-y-1">
                 {navLinks.map((link) => (
                   <Link
@@ -131,7 +149,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                     onClick={() => setIsOpen(false)}
                   >
                     {link.icon}
-                    <span>{link.name}</span>
+                    {!isSidebarCollapsed && <span>{link.name}</span>}
                   </Link>
                 ))}
                 

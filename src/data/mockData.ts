@@ -1,12 +1,12 @@
 
-import { User, Bike, Station, Reservation, MaintenanceReport, CommonIssue } from '../types';
+import { User, Bike, Station, Reservation, MaintenanceReport, CommonIssue, BikeCategory } from '../types';
 
 // Mock Users
 export const users: User[] = [
   {
     id: '1',
     name: 'John Smith',
-    email: 'john.smith@example.com',
+    email: 'admin@gmail.com',
     role: 'admin',
     verified: true,
     createdAt: '2025-01-15T08:30:00Z',
@@ -14,7 +14,7 @@ export const users: User[] = [
   {
     id: '2',
     name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
+    email: 'staff@gmail.com',
     role: 'staff',
     verified: true,
     createdAt: '2025-02-10T10:45:00Z',
@@ -43,6 +43,30 @@ export const users: User[] = [
     verified: true,
     createdAt: '2025-02-18T11:30:00Z',
   },
+  {
+    id: '6',
+    name: 'Lisa Anderson',
+    email: 'lisa.anderson@example.com',
+    role: 'user',
+    verified: true,
+    createdAt: '2025-01-22T13:15:00Z',
+  },
+  {
+    id: '7',
+    name: 'Robert Martin',
+    email: 'robert.martin@example.com',
+    role: 'user',
+    verified: true,
+    createdAt: '2025-03-12T10:30:00Z',
+  },
+  {
+    id: '8',
+    name: 'Jennifer Wilson',
+    email: 'jennifer.wilson@example.com',
+    role: 'staff',
+    verified: true,
+    createdAt: '2025-02-28T09:45:00Z',
+  }
 ];
 
 // Mock Stations
@@ -79,103 +103,174 @@ export const stations: Station[] = [
     availableBikes: 5,
     coordinates: { lat: 40.7580, lng: -73.9855 },
   },
+  {
+    id: '5',
+    name: 'Brooklyn Heights',
+    location: 'Montague St & Clinton St',
+    capacity: 18,
+    availableBikes: 12,
+    coordinates: { lat: 40.6935, lng: -73.9915 },
+  },
+  {
+    id: '6',
+    name: 'Prospect Park',
+    location: 'Grand Army Plaza',
+    capacity: 22,
+    availableBikes: 15,
+    coordinates: { lat: 40.6737, lng: -73.9703 },
+  },
 ];
 
-// Mock Bikes
+// Mock Bikes with categories
 export const bikes: Bike[] = [
   {
     id: 'B001',
     model: 'City Cruiser',
     status: 'available',
     stationId: '1',
-    batteryPercentage: 85,
     lastMaintenance: '2025-03-28T10:00:00Z',
     totalRides: 127,
+    category: 'regular',
   },
   {
     id: 'B002',
     model: 'Mountain Explorer',
     status: 'in-use',
     stationId: '1',
-    batteryPercentage: 62,
     lastMaintenance: '2025-03-15T14:30:00Z',
     totalRides: 98,
+    category: 'regular',
   },
   {
     id: 'B003',
     model: 'Commuter Pro',
     status: 'maintenance',
     stationId: '1',
-    batteryPercentage: 12,
     lastMaintenance: '2025-02-20T09:15:00Z',
     totalRides: 156,
+    category: 'electric',
   },
   {
     id: 'B004',
     model: 'Urban Glider',
     status: 'available',
     stationId: '2',
-    batteryPercentage: 91,
     lastMaintenance: '2025-04-02T11:45:00Z',
     totalRides: 73,
+    category: 'electric',
   },
   {
     id: 'B005',
     model: 'City Cruiser',
     status: 'available',
     stationId: '2',
-    batteryPercentage: 77,
     lastMaintenance: '2025-03-22T08:30:00Z',
     totalRides: 112,
+    category: 'regular',
   },
   {
     id: 'B006',
     model: 'Mountain Explorer',
     status: 'in-use',
     stationId: '2',
-    batteryPercentage: 54,
     lastMaintenance: '2025-03-10T15:20:00Z',
     totalRides: 85,
+    category: 'regular',
   },
   {
     id: 'B007',
     model: 'Commuter Pro',
     status: 'available',
     stationId: '3',
-    batteryPercentage: 96,
     lastMaintenance: '2025-04-05T10:15:00Z',
     totalRides: 42,
+    category: 'electric',
   },
   {
     id: 'B008',
     model: 'Urban Glider',
     status: 'in-use',
     stationId: '3',
-    batteryPercentage: 45,
     lastMaintenance: '2025-03-18T14:00:00Z',
     totalRides: 104,
+    category: 'scooter',
   },
   {
     id: 'B009',
     model: 'City Cruiser',
     status: 'available',
     stationId: '4',
-    batteryPercentage: 88,
     lastMaintenance: '2025-04-01T09:45:00Z',
     totalRides: 92,
+    category: 'regular',
   },
   {
     id: 'B010',
     model: 'Mountain Explorer',
     status: 'maintenance',
     stationId: '4',
-    batteryPercentage: 23,
     lastMaintenance: '2025-03-05T11:30:00Z',
     totalRides: 134,
+    category: 'regular',
+  },
+  {
+    id: 'B011',
+    model: 'SpeedScoot',
+    status: 'available',
+    stationId: '5',
+    lastMaintenance: '2025-03-30T14:45:00Z',
+    totalRides: 67,
+    category: 'scooter',
+  },
+  {
+    id: 'B012',
+    model: 'ZipScoot',
+    status: 'available',
+    stationId: '5',
+    lastMaintenance: '2025-04-03T09:30:00Z',
+    totalRides: 42,
+    category: 'scooter',
+  },
+  {
+    id: 'B013',
+    model: 'ElectroPro',
+    status: 'in-use',
+    stationId: '6',
+    lastMaintenance: '2025-03-25T11:00:00Z',
+    totalRides: 89,
+    category: 'electric',
+  },
+  {
+    id: 'B014',
+    model: 'TurboScoot',
+    status: 'available',
+    stationId: '6',
+    lastMaintenance: '2025-04-01T10:15:00Z',
+    totalRides: 56,
+    category: 'scooter',
+  },
+  {
+    id: 'B015',
+    model: 'City Cruiser',
+    status: 'available',
+    stationId: '1',
+    lastMaintenance: '2025-03-20T09:00:00Z',
+    totalRides: 103,
+    category: 'regular',
   },
 ];
 
-// Mock Reservations
+// Generate a random 6-digit uppercase alphanumeric code
+const generateReservationCode = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return code;
+};
+
+// Mock Reservations with codes
 export const reservations: Reservation[] = [
   {
     id: 'R001',
@@ -185,6 +280,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-21T10:30:00Z',
     endTime: null,
     status: 'active',
+    code: generateReservationCode(),
   },
   {
     id: 'R002',
@@ -194,6 +290,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-21T09:15:00Z',
     endTime: null,
     status: 'active',
+    code: generateReservationCode(),
   },
   {
     id: 'R003',
@@ -203,6 +300,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-21T11:45:00Z',
     endTime: null,
     status: 'active',
+    code: generateReservationCode(),
   },
   {
     id: 'R004',
@@ -212,6 +310,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-20T14:30:00Z',
     endTime: '2025-04-20T15:45:00Z',
     status: 'completed',
+    code: generateReservationCode(),
   },
   {
     id: 'R005',
@@ -221,6 +320,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-19T10:00:00Z',
     endTime: '2025-04-19T11:30:00Z',
     status: 'completed',
+    code: generateReservationCode(),
   },
   {
     id: 'R006',
@@ -230,6 +330,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-18T16:30:00Z',
     endTime: '2025-04-18T17:45:00Z',
     status: 'completed',
+    code: generateReservationCode(),
   },
   {
     id: 'R007',
@@ -239,6 +340,7 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-15T09:00:00Z',
     endTime: '2025-04-15T10:15:00Z',
     status: 'completed',
+    code: generateReservationCode(),
   },
   {
     id: 'R008',
@@ -248,6 +350,27 @@ export const reservations: Reservation[] = [
     startTime: '2025-04-20T09:15:00Z',
     endTime: null,
     status: 'overdue',
+    code: generateReservationCode(),
+  },
+  {
+    id: 'R009',
+    userId: '6',
+    bikeId: 'B011',
+    stationId: '5',
+    startTime: '2025-04-22T08:30:00Z',
+    endTime: null,
+    status: 'active',
+    code: generateReservationCode(),
+  },
+  {
+    id: 'R010',
+    userId: '7',
+    bikeId: 'B013',
+    stationId: '6',
+    startTime: '2025-04-22T10:15:00Z',
+    endTime: null,
+    status: 'active',
+    code: generateReservationCode(),
   },
 ];
 
@@ -268,8 +391,8 @@ export const maintenanceReports: MaintenanceReport[] = [
     id: 'M002',
     bikeId: 'B010',
     reportedBy: '5',
-    issue: 'Battery Issue',
-    description: 'Battery not holding charge, drops quickly during rides.',
+    issue: 'Power Issue',
+    description: 'Not powering on, may need electrical inspection.',
     status: 'pending',
     reportedAt: '2025-04-20T10:15:00Z',
     resolvedAt: null,
@@ -319,7 +442,7 @@ export const commonIssues: CommonIssue[] = [
   },
   {
     id: '2',
-    name: 'Battery Not Charging',
+    name: 'Power Issue',
     category: 'Electrical',
   },
   {
@@ -371,11 +494,18 @@ export const getBikeSummary = () => {
   const inUseBikes = bikes.filter(bike => bike.status === 'in-use').length;
   const maintenanceBikes = bikes.filter(bike => bike.status === 'maintenance').length;
   
+  const regularBikes = bikes.filter(bike => bike.category === 'regular').length;
+  const electricBikes = bikes.filter(bike => bike.category === 'electric').length;
+  const scooters = bikes.filter(bike => bike.category === 'scooter').length;
+  
   return {
     totalBikes,
     availableBikes,
     inUseBikes,
-    maintenanceBikes
+    maintenanceBikes,
+    regularBikes,
+    electricBikes,
+    scooters
   };
 };
 
@@ -408,4 +538,14 @@ export const getMaintenanceSummary = () => {
     highPriorityIssues,
     totalIssues: maintenanceReports.length
   };
+};
+
+// Function to get bikes by station
+export const getBikesByStation = (stationId: string) => {
+  return bikes.filter(bike => bike.stationId === stationId);
+};
+
+// Function to get user by ID
+export const getUserById = (userId: string) => {
+  return users.find(user => user.id === userId);
 };

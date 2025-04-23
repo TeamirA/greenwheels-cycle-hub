@@ -11,15 +11,16 @@ export interface User {
 }
 
 export type BikeStatus = 'available' | 'in-use' | 'maintenance';
+export type BikeCategory = 'regular' | 'electric' | 'scooter';
 
 export interface Bike {
   id: string;
   model: string;
   status: BikeStatus;
   stationId: string;
-  batteryPercentage?: number;
   lastMaintenance: string;
   totalRides: number;
+  category: BikeCategory;
 }
 
 export interface Station {
@@ -39,6 +40,7 @@ export interface Reservation {
   startTime: string;
   endTime: string | null;
   status: 'active' | 'completed' | 'overdue' | 'cancelled';
+  code?: string;
 }
 
 export interface MaintenanceReport {

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,16 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 const Login = () => {
   const { login, authState } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Get the path the user was trying to access, or default to their role-appropriate dashboard
-  const from = location.state?.from || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,19 +32,21 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Determine where to redirect based on user role
-        let redirectPath = from;
-        if (from === '/') {
-          if (authState.role === 'admin') {
-            redirectPath = '/admin-dashboard';
-          } else if (authState.role === 'staff') {
-            redirectPath = '/staff-panel';
-          }
+        // Role-based redirect
+        if (authState.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (authState.role === 'staff') {
+          navigate('/staff-panel');
+        } else {
+          navigate('/');
         }
-        
-        navigate(redirectPath, { replace: true });
       } else {
         setError('Invalid email or password');
+        toast({
+          title: 'Login failed',
+          description: 'Please check your credentials',
+          variant: 'destructive',
+        });
       }
     } catch (err) {
       setError('An error occurred during login');
@@ -69,6 +67,11 @@ const Login = () => {
           <p className="mt-2 text-sm text-graydark">
             Enter your credentials to access your account
           </p>
+          <div className="mt-3 text-sm text-gray-500">
+            <p>Demo accounts:</p>
+            <p>Admin: admin@gmail.com / password</p>
+            <p>Staff: staff@gmail.com / password</p>
+          </div>
         </div>
 
         {error && (
@@ -124,14 +127,6 @@ const Login = () => {
             </Button>
           </div>
         </form>
-
-        <p className="mt-4 text-center text-sm text-graydark form-input-animated" 
-           style={{ '--input-index': 3 } as React.CSSProperties}>
-          Don't have an account?{' '}
-          <Link to="/signup" className="font-medium text-greenprimary hover:underline">
-            Sign up
-          </Link>
-        </p>
       </div>
     </div>
   );

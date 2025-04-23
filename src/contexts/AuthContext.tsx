@@ -46,24 +46,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [authState]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simple demo sign-in: allow any email with password > 8 characters
-    if (email.trim() !== '' && password.length > 8) {
-      // Default to 'user' role if no matching mock user found
-      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || {
-        id: 'demo-user',
-        name: 'Demo User',
-        email: email,
-        role: 'user',
-        verified: true,
-        createdAt: new Date().toISOString()
-      };
-
+    // For demo: check credentials for admin and staff
+    if (email === 'admin@gmail.com' && password === 'password') {
       setAuthState({
-        user,
+        user: {
+          id: 'admin-user',
+          name: 'Admin User',
+          email: email,
+          role: 'admin',
+          verified: true,
+          createdAt: new Date().toISOString()
+        },
         isAuthenticated: true,
-        role: user.role,
+        role: 'admin',
       });
       return true;
+    } else if (email === 'staff@gmail.com' && password === 'password') {
+      setAuthState({
+        user: {
+          id: 'staff-user',
+          name: 'Staff User',
+          email: email,
+          role: 'staff',
+          verified: true,
+          createdAt: new Date().toISOString()
+        },
+        isAuthenticated: true,
+        role: 'staff',
+      });
+      return true;
+    } else {
+      // Check mock users as fallback
+      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      if (user && password === 'password') {
+        setAuthState({
+          user,
+          isAuthenticated: true,
+          role: user.role,
+        });
+        return true;
+      }
     }
     
     return false;
