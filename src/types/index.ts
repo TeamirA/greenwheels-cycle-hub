@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'staff' | 'user' | 'station-admin' | 'maintenance';
 
 export interface User {
@@ -11,7 +12,7 @@ export interface User {
 }
 
 export type BikeStatus = 'available' | 'in-use' | 'maintenance';
-export type BikeCategory = 'regular' | 'electric';
+export type BikeCategory = 'regular' | 'electric' | 'scooter';
 
 export interface Bike {
   id: string;
@@ -21,6 +22,7 @@ export interface Bike {
   lastMaintenance: string;
   totalRides: number;
   category: BikeCategory;
+  batteryPercentage?: number; // Adding batteryPercentage as an optional property
 }
 
 export interface Station {

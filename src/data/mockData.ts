@@ -1,4 +1,3 @@
-
 import { User, Bike, Station, Reservation, MaintenanceReport, CommonIssue, BikeCategory } from '../types';
 
 // Mock Users
@@ -121,7 +120,7 @@ export const stations: Station[] = [
   },
 ];
 
-// Mock Bikes with categories
+// Mock Bikes with categories and battery percentages
 export const bikes: Bike[] = [
   {
     id: 'B001',
@@ -131,6 +130,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-28T10:00:00Z',
     totalRides: 127,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B002',
@@ -140,6 +140,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-15T14:30:00Z',
     totalRides: 98,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B003',
@@ -149,6 +150,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-02-20T09:15:00Z',
     totalRides: 156,
     category: 'electric',
+    batteryPercentage: 85,
   },
   {
     id: 'B004',
@@ -158,6 +160,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-04-02T11:45:00Z',
     totalRides: 73,
     category: 'electric',
+    batteryPercentage: 92,
   },
   {
     id: 'B005',
@@ -167,6 +170,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-22T08:30:00Z',
     totalRides: 112,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B006',
@@ -176,6 +180,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-10T15:20:00Z',
     totalRides: 85,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B007',
@@ -185,6 +190,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-04-05T10:15:00Z',
     totalRides: 42,
     category: 'electric',
+    batteryPercentage: 78,
   },
   {
     id: 'B008',
@@ -194,6 +200,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-18T14:00:00Z',
     totalRides: 104,
     category: 'scooter',
+    batteryPercentage: 45,
   },
   {
     id: 'B009',
@@ -203,6 +210,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-04-01T09:45:00Z',
     totalRides: 92,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B010',
@@ -212,6 +220,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-05T11:30:00Z',
     totalRides: 134,
     category: 'regular',
+    batteryPercentage: 0,
   },
   {
     id: 'B011',
@@ -221,6 +230,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-30T14:45:00Z',
     totalRides: 67,
     category: 'scooter',
+    batteryPercentage: 67,
   },
   {
     id: 'B012',
@@ -230,6 +240,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-04-03T09:30:00Z',
     totalRides: 42,
     category: 'scooter',
+    batteryPercentage: 88,
   },
   {
     id: 'B013',
@@ -239,6 +250,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-25T11:00:00Z',
     totalRides: 89,
     category: 'electric',
+    batteryPercentage: 53,
   },
   {
     id: 'B014',
@@ -248,6 +260,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-04-01T10:15:00Z',
     totalRides: 56,
     category: 'scooter',
+    batteryPercentage: 76,
   },
   {
     id: 'B015',
@@ -257,6 +270,7 @@ export const bikes: Bike[] = [
     lastMaintenance: '2025-03-20T09:00:00Z',
     totalRides: 103,
     category: 'regular',
+    batteryPercentage: 0,
   },
 ];
 

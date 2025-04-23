@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -298,10 +297,11 @@ const StaffPanel = () => {
                         <p className="font-medium">{bike.model}</p>
                         <p className="text-sm text-gray-500">ID: {bike.id}</p>
                       </div>
-                      {bike.category === 'scooter' ? 
-                        <Car className="text-graydark" size={20} /> : 
+                      {bike.category === 'scooter' ? (
+                        <Car className="text-graydark" size={20} />
+                      ) : (
                         <BikeIcon className="text-graydark" size={20} />
-                      }
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs">{bike.category}</span>
