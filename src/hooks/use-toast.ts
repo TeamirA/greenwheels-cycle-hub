@@ -121,7 +121,7 @@ const addToRemoveQueue = (toastId: string) => {
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId);
-    dispatch({
+    dispatchCustomEvent({
       type: "REMOVE_TOAST",
       toastId,
     });
@@ -134,28 +134,22 @@ interface ToasterProps {
   toasts: ToasterToast[];
 }
 
-const dispatch = (() => {
-  const listeners: Array<(action: Action) => void> = [];
+// Define the dispatch object correctly
+const listeners: Array<(action: Action) => void> = [];
 
-  function subscribe(listener: (action: Action) => void) {
-    listeners.push(listener);
-    return () => {
-      const index = listeners.indexOf(listener);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  }
-
-  function dispatch(action: Action) {
-    listeners.forEach((listener) => listener(action));
-  }
-
-  return {
-    subscribe,
-    dispatch,
+function subscribe(listener: (action: Action) => void) {
+  listeners.push(listener);
+  return () => {
+    const index = listeners.indexOf(listener);
+    if (index > -1) {
+      listeners.splice(index, 1);
+    }
   };
-})();
+}
+
+function dispatchCustomEvent(action: Action) {
+  listeners.forEach((listener) => listener(action));
+}
 
 function useToast() {
   const [state, setState] = React.useState<State>({
@@ -163,7 +157,7 @@ function useToast() {
   });
 
   React.useEffect(() => {
-    return dispatch.subscribe((action) => {
+    return subscribe((action) => {
       setState((prevState) => reducer(prevState, action));
     });
   }, []);
@@ -173,14 +167,14 @@ function useToast() {
     toast: (props: Omit<ToasterToast, "id">) => {
       const id = genId();
       const update = (props: Partial<ToasterToast>) => {
-        dispatch.dispatch({
+        dispatchCustomEvent({
           type: "UPDATE_TOAST",
           toast: props,
           id,
         });
       };
       
-      dispatch.dispatch({
+      dispatchCustomEvent({
         type: "ADD_TOAST",
         toast: {
           ...props,
@@ -191,16 +185,36 @@ function useToast() {
       return {
         id,
         update,
-        dismiss: () => dispatch.dispatch({ type: "DISMISS_TOAST", toastId: id }),
+        dismiss: () => dispatchCustomEvent({ type: "DISMISS_TOAST", toastId: id }),
       };
     },
     dismiss: (toastId?: string) => {
-      dispatch.dispatch({ type: "DISMISS_TOAST", toastId });
+      dispatchCustomEvent({ type: "DISMISS_TOAST", toastId });
     },
   };
 }
 
 // Export both the custom hook and a toast function for convenience
 export { useToast };
-export const toast = (props: Omit<ToasterToast, "id">) => useToast().toast(props);
-
+export const toast = (props: Omit<ToasterToast, "id">) => {
+  const id = genId();
+  
+  dispatchCustomEvent({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+    },
+  });
+  
+  return {
+    id,
+    update: (props: Partial<ToasterToast>) => 
+      dispatchCustomEvent({
+        type: "UPDATE_TOAST",
+        toast: props,
+        id,
+      }),
+    dismiss: () => dispatchCustomEvent({ type: "DISMISS_TOAST", toastId: id }),
+  };
+};

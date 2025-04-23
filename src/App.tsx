@@ -25,6 +25,9 @@ import MaintenanceIssues from "./pages/staff/MaintenanceIssues";
 import RegisterUser from "./pages/admin/RegisterUser";
 import RegisterBike from "./pages/admin/RegisterBike";
 import CreateStation from "./pages/admin/CreateStation";
+import StationAdminDashboard from "./pages/StationAdminDashboard";
+import RegisterStationStaff from "./pages/RegisterStationStaff";
+import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +117,110 @@ const App = () => (
               } 
             />
             
+            {/* Station Admin Routes */}
+            <Route 
+              path="/station-admin-dashboard" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <StationAdminDashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/station-staff" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <UserManagement />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/station-bikes" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <AvailableBikes />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/register-station-staff" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <RegisterStationStaff />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/maintenance-team" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <UserManagement />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/station-reports" 
+              element={
+                <ProtectedRoute roles={['station-admin']}>
+                  <MainLayout>
+                    <Reports />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Maintenance Team Routes */}
+            <Route 
+              path="/maintenance-dashboard" 
+              element={
+                <ProtectedRoute roles={['maintenance']}>
+                  <MainLayout>
+                    <MaintenanceDashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/user-reports" 
+              element={
+                <ProtectedRoute roles={['maintenance']}>
+                  <MainLayout>
+                    <MaintenanceDashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/staff-reports" 
+              element={
+                <ProtectedRoute roles={['maintenance']}>
+                  <MainLayout>
+                    <MaintenanceDashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/maintenance-queue" 
+              element={
+                <ProtectedRoute roles={['maintenance']}>
+                  <MainLayout>
+                    <MaintenanceDashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
             {/* Detail Routes */}
             <Route 
               path="/bike-fleet" 
@@ -128,7 +235,7 @@ const App = () => (
             <Route 
               path="/active-rides" 
               element={
-                <ProtectedRoute roles={['admin', 'staff']}>
+                <ProtectedRoute roles={['admin', 'staff', 'station-admin']}>
                   <MainLayout>
                     <ActiveRides />
                   </MainLayout>
@@ -138,7 +245,7 @@ const App = () => (
             <Route 
               path="/available-bikes" 
               element={
-                <ProtectedRoute roles={['admin', 'staff']}>
+                <ProtectedRoute roles={['admin', 'staff', 'station-admin']}>
                   <MainLayout>
                     <AvailableBikes />
                   </MainLayout>
@@ -160,7 +267,7 @@ const App = () => (
             <Route 
               path="/reservations" 
               element={
-                <ProtectedRoute roles={['staff', 'admin']}>
+                <ProtectedRoute roles={['staff', 'admin', 'station-admin']}>
                   <MainLayout>
                     <Reservations />
                   </MainLayout>
@@ -170,7 +277,7 @@ const App = () => (
             <Route 
               path="/maintenance-issues" 
               element={
-                <ProtectedRoute roles={['staff', 'admin']}>
+                <ProtectedRoute roles={['staff', 'admin', 'station-admin']}>
                   <MainLayout>
                     <MaintenanceIssues />
                   </MainLayout>
