@@ -1,11 +1,12 @@
+
 import React, { useState } from 'react';
-import { Bike, ChevronDown, Plus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { maintenanceReports, bikes, users, commonIssues } from '@/data/mockData';
-import { MaintenanceReport, CommonIssue } from '@/types';
+import { MaintenanceReport, CommonIssue, Bike } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Report {
