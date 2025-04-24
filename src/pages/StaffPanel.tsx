@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { bikes, reservations, stations, getUserById } from '@/data/mockData';
 import { Bike as BikeIcon, MapPin, Search, Wrench, Car } from 'lucide-react';
-import StationMap from '@/components/StationMap';
+import StationMap, { StationMapLocation } from '@/components/StationMap';
 
 const StaffPanel = () => {
   const { toast } = useToast();
@@ -18,10 +17,8 @@ const StaffPanel = () => {
   const [selectedStation, setSelectedStation] = useState(stations[0]);
   const [errorMessage, setErrorMessage] = useState('');
   
-  // Get bikes at selected station
   const stationBikes = bikes.filter(bike => bike.stationId === selectedStation.id);
   
-  // Handle the verification code submission
   const handleVerifyCode = () => {
     if (!reservationCode.trim()) {
       setErrorMessage('Please enter a reservation code');
@@ -31,15 +28,12 @@ const StaffPanel = () => {
     setIsProcessing(true);
     setErrorMessage('');
     
-    // Simulate API call
     setTimeout(() => {
-      // Find reservation by code
       const reservation = reservations.find(
         r => r.code && r.code.toLowerCase() === reservationCode.trim().toLowerCase()
       );
       
       if (reservation) {
-        // Get bike and user info
         const bike = bikes.find(b => b.id === reservation.bikeId);
         const user = getUserById(reservation.userId);
         
@@ -75,7 +69,6 @@ const StaffPanel = () => {
     }, 1000);
   };
   
-  // Handle starting a ride
   const handleStartRide = () => {
     toast({
       title: 'Ride Started',
@@ -83,12 +76,10 @@ const StaffPanel = () => {
       variant: 'default',
     });
     
-    // Reset for next check-in
     setBikeDetails(null);
     setReservationCode('');
   };
   
-  // Generate a random bike detail for testing
   const handleRandomBike = () => {
     const randomBikeIndex = Math.floor(Math.random() * bikes.length);
     const bike = bikes[randomBikeIndex];
@@ -116,7 +107,6 @@ const StaffPanel = () => {
     });
   };
   
-  // Navigate to dedicated pages
   const handleNavigateToReservations = () => {
     navigate('/reservations');
   };
@@ -125,12 +115,29 @@ const StaffPanel = () => {
     navigate('/maintenance-issues');
   };
   
+  const stationLocations: StationMapLocation[] = stations.map(station => ({
+    id: station.id,
+    name: station.name,
+    location: {
+      latitude: station.coordinates.lat,
+      longitude: station.coordinates.lng
+    }
+  }));
+  
+  const selectedStationId = selectedStation.id;
+  
+  const handleStationSelect = (stationId: string) => {
+    const station = stations.find(s => s.id === stationId);
+    if (station) {
+      setSelectedStation(station);
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Staff Control Panel</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bike Check-in Section */}
         <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <BikeIcon className="mr-2" size={20} />
@@ -223,7 +230,6 @@ const StaffPanel = () => {
           )}
         </div>
         
-        {/* Actions Section */}
         <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           
@@ -260,7 +266,6 @@ const StaffPanel = () => {
         </div>
       </div>
       
-      {/* Active Bikes Map */}
       <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Active Bikes by Station</h2>
@@ -282,7 +287,6 @@ const StaffPanel = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Bike List */}
           <div className="lg:col-span-1 max-h-[300px] overflow-y-auto pr-2">
             <div className="flex items-center gap-2 mb-3">
               <Search size={16} />
@@ -324,12 +328,11 @@ const StaffPanel = () => {
             )}
           </div>
           
-          {/* Map */}
           <div className="lg:col-span-2 h-[300px] bg-graylight rounded-lg overflow-hidden dark:bg-gray-700">
             <StationMap 
-              stations={stations} 
-              selectedStation={selectedStation} 
-              onStationSelect={setSelectedStation} 
+              stations={stationLocations} 
+              selectedStation={selectedStationId} 
+              onStationSelect={handleStationSelect} 
             />
           </div>
         </div>

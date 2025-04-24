@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { stations as initialStations, bikes } from '@/data/mockData';
 import { Station } from '@/types';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { MapPin, Bike, Edit } from 'lucide-react';
-import StationMap from '@/components/StationMap';
+import StationMap, { StationMapLocation } from '@/components/StationMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const StationManagement = () => {
@@ -43,9 +42,12 @@ const StationManagement = () => {
     setMapSelectedStation(station);
   };
 
-  const handleMapPinClick = (station: Station) => {
-    setSelectedStation(station);
-    setMapSelectedStation(station);
+  const handleMapPinClick = (stationId: string) => {
+    const station = stations.find(s => s.id === stationId);
+    if (station) {
+      setSelectedStation(station);
+      setMapSelectedStation(station);
+    }
   };
 
   const getBikesAtStation = (stationId: string) => {
@@ -108,6 +110,18 @@ const StationManagement = () => {
       variant: "default"
     });
   };
+
+  // Transform stations data for the StationMap component
+  const stationLocations: StationMapLocation[] = stations.map(station => ({
+    id: station.id,
+    name: station.name,
+    location: {
+      latitude: station.coordinates.lat,
+      longitude: station.coordinates.lng
+    }
+  }));
+  
+  const selectedStationId = mapSelectedStation?.id || '';
 
   return (
     <div className="space-y-6">
@@ -272,8 +286,8 @@ const StationManagement = () => {
         <h2 className="text-xl font-semibold text-graydark mb-4">Station Map</h2>
         <div className="h-[400px] rounded-lg overflow-hidden border border-graylight">
           <StationMap 
-            stations={stations} 
-            selectedStation={mapSelectedStation} 
+            stations={stationLocations} 
+            selectedStation={selectedStationId} 
             onStationSelect={handleMapPinClick} 
           />
         </div>

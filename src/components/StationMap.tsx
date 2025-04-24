@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { MapPin } from 'lucide-react';
 
-// Updated interface to match what we're passing from Index and MaintenanceDashboard
-interface StationMapLocation {
+// Updated interface to match what we're passing from various components
+export interface StationMapLocation {
   id: string;
   name: string;
   location: { latitude: number; longitude: number } | null;
@@ -11,7 +11,7 @@ interface StationMapLocation {
 
 interface StationMapProps {
   stations: StationMapLocation[];
-  selectedStation: string; // This is just an ID now
+  selectedStation: string;
   onStationSelect: (id: string) => void;
 }
 
@@ -44,14 +44,14 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
   };
   
   return (
-    <div className="relative w-full h-full bg-gray-100 overflow-hidden">
+    <div className="relative w-full h-full bg-gray-100 overflow-hidden dark:bg-gray-800">
       {/* Map Background - would be replaced with actual map in production */}
       <div className="absolute inset-0 bg-[url('https://i.imgur.com/5mVK6vB.png')] bg-cover bg-center opacity-50" />
       
       {/* Grid lines to simulate map */}
       <div className="absolute inset-0 grid grid-cols-8 grid-rows-8">
         {Array.from({ length: 64 }).map((_, i) => (
-          <div key={i} className="border border-gray-200 opacity-20" />
+          <div key={i} className="border border-gray-200 opacity-20 dark:border-gray-600" />
         ))}
       </div>
       
@@ -70,7 +70,7 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
               flex items-center justify-center w-10 h-10 rounded-full 
               ${selectedStation === station.id 
                 ? 'bg-greenprimary text-white shadow-lg' 
-                : 'bg-white text-greenprimary shadow'
+                : 'bg-white text-greenprimary shadow dark:bg-gray-700 dark:text-white'
               }
               hover:bg-greenprimary hover:text-white transition-colors
             `}>
@@ -80,11 +80,12 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
             {/* Station name tooltip */}
             <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-max opacity-0 
                           group-hover:opacity-100 transition-opacity bg-white text-graydark 
-                          text-xs px-2 py-1 rounded shadow pointer-events-none z-30">
+                          text-xs px-2 py-1 rounded shadow pointer-events-none z-30
+                          dark:bg-gray-800 dark:text-white">
               {station.name}
               <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 
                             border-b-4 border-l-4 border-r-4 
-                            border-transparent border-b-white" />
+                            border-transparent border-b-white dark:border-b-gray-800" />
             </div>
             
             {/* Pulse effect for selected station */}
@@ -97,8 +98,8 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
       
       {/* Loading overlay */}
       {!mapLoaded && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-          <div className="text-graydark animate-pulse">Loading map...</div>
+        <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center">
+          <div className="text-graydark animate-pulse dark:text-gray-300">Loading map...</div>
         </div>
       )}
     </div>
