@@ -1,4 +1,5 @@
-import { User, Bike, Station, MaintenanceReport } from '@/types';
+
+import { User, Bike, Station, MaintenanceReport, BikeCategory, CommonIssue, Reservation } from '@/types';
 
 export const users: User[] = [
   {
@@ -6,63 +7,81 @@ export const users: User[] = [
     name: 'Alice Johnson',
     email: 'alice.j@example.com',
     role: 'user',
-    stationId: 'station-1'
+    stationId: 'station-1',
+    verified: true,
+    createdAt: new Date(2024, 1, 15).toISOString()
   },
   {
     id: 'user-2',
     name: 'Bob Williams',
     email: 'bob.w@example.com',
     role: 'user',
-    stationId: 'station-2'
+    stationId: 'station-2',
+    verified: true,
+    createdAt: new Date(2024, 2, 5).toISOString()
   },
   {
     id: 'staff-1',
     name: 'Charlie Brown',
     email: 'charlie.b@staff.com',
     role: 'staff',
-    stationId: 'station-1'
+    stationId: 'station-1',
+    verified: true,
+    createdAt: new Date(2024, 0, 10).toISOString()
   },
   {
     id: 'staff-2',
     name: 'Diana Miller',
     email: 'diana.m@staff.com',
     role: 'staff',
-    stationId: 'station-2'
+    stationId: 'station-2',
+    verified: true,
+    createdAt: new Date(2024, 0, 12).toISOString()
   },
   {
     id: 'maintenance-1',
     name: 'John Smith',
     email: 'john.smith@maintenance.com',
     role: 'maintenance',
-    stationId: 'station-1'
+    stationId: 'station-1',
+    verified: true,
+    createdAt: new Date(2023, 11, 5).toISOString()
   },
   {
     id: 'maintenance-2',
     name: 'Sarah Johnson',
     email: 'sarah.j@maintenance.com',
     role: 'maintenance',
-    stationId: 'station-2'
+    stationId: 'station-2',
+    verified: true,
+    createdAt: new Date(2023, 10, 15).toISOString()
   },
   {
     id: 'station-admin-1',
     name: 'Michael Chen',
     email: 'michael.chen@stations.com',
     role: 'station-admin',
-    stationId: 'station-1'
+    stationId: 'station-1',
+    verified: true,
+    createdAt: new Date(2023, 9, 20).toISOString()
   },
   {
     id: 'station-admin-2',
     name: 'Lisa Wong',
     email: 'lisa.wong@stations.com',
     role: 'station-admin',
-    stationId: 'station-2'
+    stationId: 'station-2',
+    verified: true,
+    createdAt: new Date(2023, 9, 22).toISOString()
   },
   ...Array.from({ length: 20 }).map((_, i) => ({
     id: `user-${i + 10}`,
     name: `Test User ${i + 10}`,
     email: `user${i + 10}@example.com`,
     role: ['user', 'maintenance', 'station-admin'][Math.floor(Math.random() * 3)] as 'user' | 'maintenance' | 'station-admin',
-    stationId: `station-${Math.floor(Math.random() * 5) + 1}`
+    stationId: `station-${Math.floor(Math.random() * 5) + 1}`,
+    verified: Math.random() > 0.2,
+    createdAt: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString()
   }))
 ];
 
@@ -115,7 +134,7 @@ export const bikes: Bike[] = [
     model: ['City Cruiser', 'Mountain Explorer', 'Urban Commuter'][Math.floor(Math.random() * 3)],
     status: ['available', 'in-use', 'maintenance'][Math.floor(Math.random() * 3)] as 'available' | 'in-use' | 'maintenance',
     stationId: `station-${Math.floor(Math.random() * 5) + 1}`,
-    category: ['regular', 'electric', 'scooter'][Math.floor(Math.random() * 3)],
+    category: ['regular', 'electric', 'scooter'][Math.floor(Math.random() * 3)] as BikeCategory,
     lastMaintenance: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString(),
     totalRides: Math.floor(Math.random() * 1000)
   }))
@@ -134,3 +153,79 @@ export const maintenanceReports: MaintenanceReport[] = [
     resolvedAt: Math.random() > 0.5 ? new Date(Date.now() - Math.floor(Math.random() * 15) * 24 * 60 * 60 * 1000).toISOString() : null
   }))
 ];
+
+// Adding the missing reservations data
+export const reservations: Reservation[] = [
+  ...Array.from({ length: 50 }).map((_, i) => ({
+    id: `reservation-${i + 1}`,
+    userId: users[Math.floor(Math.random() * users.length)].id,
+    bikeId: bikes[Math.floor(Math.random() * bikes.length)].id,
+    stationId: stations[Math.floor(Math.random() * stations.length)].id,
+    startTime: new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString(),
+    endTime: Math.random() > 0.3 ? new Date(Date.now() + Math.floor(Math.random() * 3) * 24 * 60 * 60 * 1000).toISOString() : null,
+    status: ['active', 'completed', 'overdue', 'cancelled'][Math.floor(Math.random() * 4)] as 'active' | 'completed' | 'overdue' | 'cancelled',
+    code: Math.random().toString(36).substring(2, 8).toUpperCase()
+  }))
+];
+
+// Adding common issues for maintenance
+export const commonIssues: CommonIssue[] = [
+  { id: 'issue-1', name: 'Flat Tire', category: 'Wheel' },
+  { id: 'issue-2', name: 'Brake Issue', category: 'Brakes' },
+  { id: 'issue-3', name: 'Chain Problem', category: 'Drivetrain' },
+  { id: 'issue-4', name: 'Seat Loose', category: 'Comfort' },
+  { id: 'issue-5', name: 'Light Not Working', category: 'Electrical' },
+  { id: 'issue-6', name: 'Gear Shifting Issue', category: 'Drivetrain' },
+  { id: 'issue-7', name: 'Handlebar Loose', category: 'Steering' },
+  { id: 'issue-8', name: 'Pedal Issue', category: 'Drivetrain' },
+  { id: 'issue-9', name: 'Wheel Alignment', category: 'Wheel' },
+  { id: 'issue-10', name: 'Frame Damage', category: 'Structure' }
+];
+
+// Helper to get a user by ID
+export const getUserById = (id: string): User | undefined => {
+  return users.find(user => user.id === id);
+};
+
+// Calculate bike fleet summary
+export const getBikeSummary = () => {
+  const availableBikes = bikes.filter(bike => bike.status === 'available').length;
+  const inUseBikes = bikes.filter(bike => bike.status === 'in-use').length;
+  const maintenanceBikes = bikes.filter(bike => bike.status === 'maintenance').length;
+
+  return {
+    totalBikes: bikes.length,
+    availableBikes,
+    inUseBikes,
+    maintenanceBikes,
+    utilization: Math.round((inUseBikes / bikes.length) * 100)
+  };
+};
+
+// Calculate station summary
+export const getStationSummary = () => {
+  const totalCapacity = stations.reduce((sum, station) => sum + station.capacity, 0);
+  const totalAvailableBikes = stations.reduce((sum, station) => sum + station.availableBikes, 0);
+
+  return {
+    totalStations: stations.length,
+    totalCapacity,
+    totalAvailableBikes,
+    utilization: Math.round((totalAvailableBikes / totalCapacity) * 100)
+  };
+};
+
+// Calculate maintenance summary
+export const getMaintenanceSummary = () => {
+  const pendingIssues = maintenanceReports.filter(report => report.status === 'pending').length;
+  const inProgressIssues = maintenanceReports.filter(report => report.status === 'in-progress').length;
+  const resolvedIssues = maintenanceReports.filter(report => report.status === 'resolved').length;
+
+  return {
+    totalIssues: maintenanceReports.length,
+    pendingIssues,
+    inProgressIssues,
+    resolvedIssues,
+    resolutionRate: Math.round((resolvedIssues / maintenanceReports.length) * 100)
+  };
+};
