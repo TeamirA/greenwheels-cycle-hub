@@ -23,20 +23,15 @@ const StationAdminDashboard = () => {
   
   const stationId = authState.user?.stationId || 'station-1';
   
-  const stationData = stations.find(station => station.id === stationId);
-  
-  const stationBikes = bikes.filter(bike => bike.stationId === stationId);
-  
-  const stationUsers = allUsers.filter(user => 
-    user.stationId === stationId && (user.role === 'staff' || user.role === 'maintenance')
-  );
-  
-  const stationReports = maintenanceReports.filter(report => {
-    const reportedBike = bikes.find(bike => bike.id === report.bikeId);
-    return reportedBike && reportedBike.stationId === stationId;
-  });
-  
   useEffect(() => {
+    const stationData = stations.find(station => station.id === stationId);
+    const stationBikes = bikes.filter(bike => bike.stationId === stationId);
+    const stationUsers = allUsers.filter(user => user.stationId === stationId);
+    const stationReports = maintenanceReports.filter(report => {
+      const bike = bikes.find(b => b.id === report.bikeId);
+      return bike && bike.stationId === stationId;
+    });
+    
     setStats({
       totalStaffMembers: stationUsers.filter(user => user.role === 'staff').length,
       totalMaintenanceMembers: stationUsers.filter(user => user.role === 'maintenance').length,
@@ -44,11 +39,11 @@ const StationAdminDashboard = () => {
       availableBikes: stationBikes.filter(bike => bike.status === 'available').length,
       inUseBikes: stationBikes.filter(bike => bike.status === 'in-use').length,
       maintenanceBikes: stationBikes.filter(bike => bike.status === 'maintenance').length,
-      pendingIssues: stationReports.filter(report => report.status !== 'resolved').length,
+      pendingIssues: stationReports.filter(report => report.status === 'pending').length,
       resolvedIssues: stationReports.filter(report => report.status === 'resolved').length
     });
   }, [stationId]);
-  
+
   const bikeStatusData = [
     { name: 'Available', value: stats.availableBikes, color: '#28B463' },
     { name: 'In Use', value: stats.inUseBikes, color: '#F7DC6F' },
@@ -67,7 +62,7 @@ const StationAdminDashboard = () => {
         <div>
           <h1 className="text-2xl font-bold dark:text-white">Station Admin Dashboard</h1>
           <p className="text-muted-foreground dark:text-gray-400">
-            Managing {stationData?.name || 'Loading...'} at {stationData?.location || ''}
+            Managing {stations.find(station => station.id === stationId)?.name || 'Loading...'} at {stations.find(station => station.id === stationId)?.location || ''}
           </p>
         </div>
       </div>
