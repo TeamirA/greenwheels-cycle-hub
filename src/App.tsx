@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,9 +28,9 @@ import StationAdminDashboard from "./pages/StationAdminDashboard";
 import RegisterStationStaff from "./pages/RegisterStationStaff";
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 
-// Define additional routes
-const UserReports = () => <MaintenanceDashboard />;
+// Define MaintenanceDashboardWithProps to handle the reportSource prop
 const StaffReports = () => <MaintenanceDashboard reportSource="staff" />;
+const UserReports = () => <MaintenanceDashboard />;
 
 const queryClient = new QueryClient();
 

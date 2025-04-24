@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { stations, bikes, users as allUsers, maintenanceReports } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { User, MapPin, Wrench, Users, Bike, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
+import { User, MapPin, Wrench, Users, Bike, AlertTriangle, CheckCircle, ArrowRight, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const StationAdminDashboard = () => {
@@ -22,28 +21,22 @@ const StationAdminDashboard = () => {
     resolvedIssues: 0
   });
   
-  // Get station ID from logged in user
-  const stationId = authState.user?.stationId || 'station-1'; // Fallback to station-1
+  const stationId = authState.user?.stationId || 'station-1';
   
-  // Get station data
   const stationData = stations.find(station => station.id === stationId);
   
-  // Filter bikes for this station
   const stationBikes = bikes.filter(bike => bike.stationId === stationId);
   
-  // Filter users (staff) for this station
   const stationUsers = allUsers.filter(user => 
     user.stationId === stationId && (user.role === 'staff' || user.role === 'maintenance')
   );
   
-  // Filter maintenance reports for this station
   const stationReports = maintenanceReports.filter(report => {
     const reportedBike = bikes.find(bike => bike.id === report.bikeId);
     return reportedBike && reportedBike.stationId === stationId;
   });
   
   useEffect(() => {
-    // Calculate statistics
     setStats({
       totalStaffMembers: stationUsers.filter(user => user.role === 'staff').length,
       totalMaintenanceMembers: stationUsers.filter(user => user.role === 'maintenance').length,
@@ -56,14 +49,12 @@ const StationAdminDashboard = () => {
     });
   }, [stationId]);
   
-  // Chart data for bike status
   const bikeStatusData = [
     { name: 'Available', value: stats.availableBikes, color: '#28B463' },
     { name: 'In Use', value: stats.inUseBikes, color: '#F7DC6F' },
     { name: 'Maintenance', value: stats.maintenanceBikes, color: '#E74C3C' },
   ];
   
-  // Chart data for bike categories
   const bikeCategoryData = [
     { name: 'Regular', value: stationBikes.filter(b => b.category === 'regular').length },
     { name: 'Electric', value: stationBikes.filter(b => b.category === 'electric').length },
@@ -81,7 +72,6 @@ const StationAdminDashboard = () => {
         </div>
       </div>
       
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card className="bg-white dark:bg-gray-800 transition-all hover:shadow-md cursor-pointer" onClick={() => navigate('/station-staff')}>
           <CardHeader className="pb-2">
@@ -146,7 +136,6 @@ const StationAdminDashboard = () => {
         </Card>
       </div>
       
-      {/* Station Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="bg-white dark:bg-gray-800 lg:col-span-2">
           <CardHeader>
@@ -215,7 +204,6 @@ const StationAdminDashboard = () => {
         </Card>
       </div>
       
-      {/* Quick Actions */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4 dark:text-white">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

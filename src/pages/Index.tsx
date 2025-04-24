@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -85,10 +84,13 @@ const Index = () => {
                 Experience the unique blend of traditional culture and modern development as you pedal through neighborhoods, past bustling markets, and along tree-lined avenues. With Green Wheels, you'll see Addis Ababa from a whole new perspective.
               </p>
             </div>
-            <div className="md:w-1/2 h-[400px] rounded-lg overflow-hidden">
-              {/* City map display */}
+            <div className="md:w-1/2 h-[400px] rounded-lg overflow-hidden shadow-lg">
               <div className="h-full w-full border border-gray-200 dark:border-gray-700 rounded-lg">
-                <StationMap stations={stations} />
+                <StationMap 
+                  stations={stations} 
+                  selectedStation={""} 
+                  onStationSelect={() => {}} 
+                />
               </div>
             </div>
           </div>
