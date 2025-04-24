@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   LayoutDashboard, Bike, MapPin, Users, FileText, 
   LogOut, Menu, X, ChevronDown, ChevronLeft, ChevronRight,
-  ListCheck, Wrench, UserPlus, PlusCircle, Car, Sun, Moon
+  ListCheck, Wrench, UserPlus, PlusCircle, Sun, Moon, Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';

@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [authState]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // For demo: check credentials for admin and staff
+    // For demo: check credentials for predefined roles
     if (email === 'admin@gmail.com' && password === 'password') {
       setAuthState({
         user: {
@@ -69,10 +69,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: email,
           role: 'staff',
           verified: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          stationId: 'station-1'
         },
         isAuthenticated: true,
         role: 'staff',
+      });
+      return true;
+    } else if (email === 'maintenance@gmail.com' && password === 'password') {
+      setAuthState({
+        user: {
+          id: 'maintenance-user',
+          name: 'Maintenance Team User',
+          email: email,
+          role: 'maintenance',
+          verified: true,
+          createdAt: new Date().toISOString(),
+          stationId: 'station-1'
+        },
+        isAuthenticated: true,
+        role: 'maintenance',
+      });
+      return true;
+    } else if (email === 'stationAdmin@gmail.com' && password === 'password') {
+      setAuthState({
+        user: {
+          id: 'station-admin-user',
+          name: 'Station Admin User',
+          email: email,
+          role: 'station-admin',
+          verified: true,
+          createdAt: new Date().toISOString(),
+          stationId: 'station-1'
+        },
+        isAuthenticated: true,
+        role: 'station-admin',
       });
       return true;
     } else {

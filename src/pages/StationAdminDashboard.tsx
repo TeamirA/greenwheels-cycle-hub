@@ -1,233 +1,242 @@
 
-import { useState } from 'react';
-import { stations, bikes, users, maintenanceReports } from '@/data/mockData';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Bike, Users, Wrench, Search, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import StationMap from '@/components/StationMap';
-import { Bike as BikeType } from '@/types';
+import { stations, bikes, users as allUsers, maintenanceReports } from '@/data/mockData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { User, MapPin, Wrench, Users, Bike, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const StationAdminDashboard = () => {
-  const navigate = useNavigate();
   const { authState } = useAuth();
-  // Assuming the first station for demo purposes
-  const [selectedStation, setSelectedStation] = useState(stations[0]);
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalStaffMembers: 0,
+    totalMaintenanceMembers: 0,
+    totalBikes: 0,
+    availableBikes: 0,
+    inUseBikes: 0,
+    maintenanceBikes: 0,
+    pendingIssues: 0,
+    resolvedIssues: 0
+  });
   
-  // Filter bikes for the selected station
-  const stationBikes = bikes.filter(bike => bike.stationId === selectedStation.id);
+  // Get station ID from logged in user
+  const stationId = authState.user?.stationId || 'station-1'; // Fallback to station-1
   
-  // Filter station staff
-  const stationStaff = users.filter(user => 
-    (user.role === 'staff' || user.role === 'maintenance') && user.stationId === selectedStation.id
+  // Get station data
+  const stationData = stations.find(station => station.id === stationId);
+  
+  // Filter bikes for this station
+  const stationBikes = bikes.filter(bike => bike.stationId === stationId);
+  
+  // Filter users (staff) for this station
+  const stationUsers = allUsers.filter(user => 
+    user.stationId === stationId && (user.role === 'staff' || user.role === 'maintenance')
   );
   
-  // Get maintenance reports for this station's bikes
-  const stationBikeIds = stationBikes.map(bike => bike.id);
-  const stationMaintenanceReports = maintenanceReports.filter(
-    report => stationBikeIds.includes(report.bikeId)
-  );
+  // Filter maintenance reports for this station
+  const stationReports = maintenanceReports.filter(report => {
+    const reportedBike = bikes.find(bike => bike.id === report.bikeId);
+    return reportedBike && reportedBike.stationId === stationId;
+  });
   
-  // Count stats
-  const availableBikes = stationBikes.filter(bike => bike.status === 'available').length;
-  const inUseBikes = stationBikes.filter(bike => bike.status === 'in-use').length;
-  const maintenanceBikes = stationBikes.filter(bike => bike.status === 'maintenance').length;
-  const pendingReports = stationMaintenanceReports.filter(report => report.status === 'pending').length;
+  useEffect(() => {
+    // Calculate statistics
+    setStats({
+      totalStaffMembers: stationUsers.filter(user => user.role === 'staff').length,
+      totalMaintenanceMembers: stationUsers.filter(user => user.role === 'maintenance').length,
+      totalBikes: stationBikes.length,
+      availableBikes: stationBikes.filter(bike => bike.status === 'available').length,
+      inUseBikes: stationBikes.filter(bike => bike.status === 'in-use').length,
+      maintenanceBikes: stationBikes.filter(bike => bike.status === 'maintenance').length,
+      pendingIssues: stationReports.filter(report => report.status !== 'resolved').length,
+      resolvedIssues: stationReports.filter(report => report.status === 'resolved').length
+    });
+  }, [stationId]);
   
-  const bikesByCategory = stationBikes.reduce((acc, bike) => {
-    acc[bike.category] = (acc[bike.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Chart data for bike status
+  const bikeStatusData = [
+    { name: 'Available', value: stats.availableBikes, color: '#28B463' },
+    { name: 'In Use', value: stats.inUseBikes, color: '#F7DC6F' },
+    { name: 'Maintenance', value: stats.maintenanceBikes, color: '#E74C3C' },
+  ];
   
+  // Chart data for bike categories
+  const bikeCategoryData = [
+    { name: 'Regular', value: stationBikes.filter(b => b.category === 'regular').length },
+    { name: 'Electric', value: stationBikes.filter(b => b.category === 'electric').length },
+    { name: 'Scooter', value: stationBikes.filter(b => b.category === 'scooter').length },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold dark:text-white">Station Admin Dashboard</h1>
-          <p className="text-muted-foreground dark:text-gray-400">Manage {selectedStation.name} station</p>
+          <p className="text-muted-foreground dark:text-gray-400">
+            Managing {stationData?.name || 'Loading...'} at {stationData?.location || ''}
+          </p>
         </div>
       </div>
-
-      {/* Station Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 border dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">Available Bikes</p>
-              <h3 className="text-2xl font-bold mt-1 dark:text-white">{availableBikes}</h3>
+      
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <Card className="bg-white dark:bg-gray-800 transition-all hover:shadow-md cursor-pointer" onClick={() => navigate('/station-staff')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground dark:text-gray-400">Station Staff</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <div className="text-2xl font-bold dark:text-white">{stats.totalStaffMembers}</div>
+              <Users className="h-6 w-6 text-greenprimary" />
             </div>
-            <div className="p-2 bg-green-100 rounded-lg dark:bg-green-900">
-              <Bike className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
-            {Math.round((availableBikes / selectedStation.capacity) * 100)}% of capacity
-          </div>
+            <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400 flex items-center">
+              View staff details <ArrowRight className="h-3 w-3 ml-1" />
+            </p>
+          </CardContent>
         </Card>
         
-        <Card className="p-5 border dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">In Use Bikes</p>
-              <h3 className="text-2xl font-bold mt-1 dark:text-white">{inUseBikes}</h3>
+        <Card className="bg-white dark:bg-gray-800 transition-all hover:shadow-md cursor-pointer" onClick={() => navigate('/maintenance-team')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground dark:text-gray-400">Maintenance Team</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <div className="text-2xl font-bold dark:text-white">{stats.totalMaintenanceMembers}</div>
+              <Wrench className="h-6 w-6 text-greenprimary" />
             </div>
-            <div className="p-2 bg-blue-100 rounded-lg dark:bg-blue-900">
-              <Bike className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
-            {Math.round((inUseBikes / stationBikes.length) * 100)}% of fleet
-          </div>
+            <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400 flex items-center">
+              View team details <ArrowRight className="h-3 w-3 ml-1" />
+            </p>
+          </CardContent>
         </Card>
         
-        <Card className="p-5 border dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">Staff Members</p>
-              <h3 className="text-2xl font-bold mt-1 dark:text-white">{stationStaff.length}</h3>
+        <Card className="bg-white dark:bg-gray-800 transition-all hover:shadow-md cursor-pointer" onClick={() => navigate('/station-bikes')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground dark:text-gray-400">Station Bikes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <div className="text-2xl font-bold dark:text-white">{stats.totalBikes}</div>
+              <Bike className="h-6 w-6 text-greenprimary" />
             </div>
-            <div className="p-2 bg-purple-100 rounded-lg dark:bg-purple-900">
-              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
-            {stationStaff.filter(user => user.role === 'staff').length} staff, {stationStaff.filter(user => user.role === 'maintenance').length} maintenance
-          </div>
+            <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400 flex items-center">
+              View all bikes <ArrowRight className="h-3 w-3 ml-1" />
+            </p>
+          </CardContent>
         </Card>
         
-        <Card className="p-5 border dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-gray-400">Pending Maintenance</p>
-              <h3 className="text-2xl font-bold mt-1 dark:text-white">{pendingReports}</h3>
-            </div>
-            <div className="p-2 bg-yellow-100 rounded-lg dark:bg-yellow-900">
-              <Wrench className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2 dark:text-gray-400">
-            {maintenanceBikes} bikes currently out of service
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Station Map */}
-        <Card className="border dark:border-gray-700 dark:bg-gray-800">
-          <div className="p-4 border-b dark:border-gray-700">
-            <h2 className="text-lg font-semibold flex items-center dark:text-white">
-              <MapPin className="mr-2" size={18} />
-              Station Location
-            </h2>
-          </div>
-          <div className="p-4">
-            <div className="h-[300px] rounded-md overflow-hidden">
-              <StationMap
-                stations={[selectedStation]}
-                selectedStation={selectedStation}
-                onStationSelect={setSelectedStation}
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Station Bikes */}
-        <Card className="border dark:border-gray-700 dark:bg-gray-800">
-          <div className="p-4 border-b flex justify-between items-center dark:border-gray-700">
-            <h2 className="text-lg font-semibold flex items-center dark:text-white">
-              <Bike className="mr-2" size={18} />
-              Station Bikes
-            </h2>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <Input placeholder="Search bikes..." className="pl-9 w-48 h-8 dark:bg-gray-700 dark:border-gray-600" />
+        <Card className="bg-white dark:bg-gray-800 transition-all hover:shadow-md cursor-pointer" onClick={() => navigate('/station-reports')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground dark:text-gray-400">Maintenance Issues</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <div className="text-2xl font-bold dark:text-white">
+                {stats.pendingIssues} <span className="text-sm text-muted-foreground dark:text-gray-400">pending</span>
               </div>
+              <AlertTriangle className="h-6 w-6 text-error" />
             </div>
-          </div>
-          <div className="p-0">
-            <div className="max-h-[300px] overflow-auto">
-              {stationBikes.length > 0 ? (
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="p-3 text-left text-sm font-medium text-muted-foreground dark:text-gray-300">ID</th>
-                      <th className="p-3 text-left text-sm font-medium text-muted-foreground dark:text-gray-300">Model</th>
-                      <th className="p-3 text-left text-sm font-medium text-muted-foreground dark:text-gray-300">Category</th>
-                      <th className="p-3 text-left text-sm font-medium text-muted-foreground dark:text-gray-300">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y dark:divide-gray-700">
-                    {stationBikes.map((bike) => (
-                      <tr key={bike.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="p-3 text-sm dark:text-gray-300">{bike.id}</td>
-                        <td className="p-3 text-sm dark:text-gray-300">{bike.model}</td>
-                        <td className="p-3 text-sm dark:text-gray-300">{bike.category}</td>
-                        <td className="p-3 text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            bike.status === 'available'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                              : bike.status === 'in-use'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                          }`}>
-                            {bike.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="py-8 text-center text-muted-foreground dark:text-gray-400">
-                  No bikes assigned to this station
-                </div>
-              )}
-            </div>
-          </div>
+            <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400 flex items-center">
+              View all reports <ArrowRight className="h-3 w-3 ml-1" />
+            </p>
+          </CardContent>
         </Card>
       </div>
-
+      
+      {/* Station Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="bg-white dark:bg-gray-800 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="dark:text-white">Station Bike Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={bikeCategoryData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+                  <XAxis dataKey="name" stroke="#888888" />
+                  <YAxis stroke="#888888" />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc'
+                    }} 
+                  />
+                  <Legend />
+                  <Bar dataKey="value" name="Number of Bikes" fill="#28B463" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white dark:bg-gray-800">
+          <CardHeader>
+            <CardTitle className="dark:text-white">Bike Availability</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={bikeStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {bikeStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc'
+                    }}
+                    formatter={(value) => [value, 'Bikes']}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* Quick Actions */}
-      <div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4 dark:text-white">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Button 
-            onClick={() => navigate('/register-station-staff')} 
-            className="h-auto py-3 justify-start px-4 space-x-3 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white"
-            variant="outline"
-          >
-            <Users className="h-5 w-5" />
-            <div className="text-left">
-              <p className="font-medium">Register New Staff</p>
-              <p className="text-xs text-muted-foreground dark:text-gray-400">Add staff or maintenance team member</p>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Button onClick={() => navigate('/register-station-staff')} className="h-auto py-6 w-full flex flex-col items-center justify-center gap-2">
+            <UserPlus size={24} />
+            <span>Register Staff</span>
           </Button>
           
-          <Button 
-            onClick={() => navigate('/station-staff')} 
-            className="h-auto py-3 justify-start px-4 space-x-3 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white"
-            variant="outline"
-          >
-            <Users className="h-5 w-5" />
-            <div className="text-left">
-              <p className="font-medium">Manage Staff</p>
-              <p className="text-xs text-muted-foreground dark:text-gray-400">View and edit station staff</p>
-            </div>
+          <Button onClick={() => navigate('/station-bikes')} variant="outline" className="h-auto py-6 w-full flex flex-col items-center justify-center gap-2 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+            <Bike size={24} />
+            <span>Manage Bikes</span>
           </Button>
           
-          <Button 
-            onClick={() => navigate('/station-reports')} 
-            className="h-auto py-3 justify-start px-4 space-x-3 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white"
-            variant="outline"
-          >
-            <Wrench className="h-5 w-5" />
-            <div className="text-left">
-              <p className="font-medium">Maintenance Reports</p>
-              <p className="text-xs text-muted-foreground dark:text-gray-400">View pending maintenance issues</p>
-            </div>
+          <Button onClick={() => navigate('/maintenance-issues')} variant="outline" className="h-auto py-6 w-full flex flex-col items-center justify-center gap-2 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+            <AlertTriangle size={24} />
+            <span>View Issues</span>
+          </Button>
+          
+          <Button onClick={() => navigate('/active-rides')} variant="outline" className="h-auto py-6 w-full flex flex-col items-center justify-center gap-2 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+            <CheckCircle size={24} />
+            <span>Active Rides</span>
           </Button>
         </div>
       </div>

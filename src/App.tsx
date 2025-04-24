@@ -29,6 +29,10 @@ import StationAdminDashboard from "./pages/StationAdminDashboard";
 import RegisterStationStaff from "./pages/RegisterStationStaff";
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 
+// Define additional routes
+const UserReports = () => <MaintenanceDashboard />;
+const StaffReports = () => <MaintenanceDashboard reportSource="staff" />;
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -67,7 +71,7 @@ const App = () => (
             <Route 
               path="/user-management" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['admin', 'station-admin']}>
                   <MainLayout>
                     <UserManagement />
                   </MainLayout>
@@ -195,7 +199,7 @@ const App = () => (
               element={
                 <ProtectedRoute roles={['maintenance']}>
                   <MainLayout>
-                    <MaintenanceDashboard />
+                    <UserReports />
                   </MainLayout>
                 </ProtectedRoute>
               } 
@@ -205,7 +209,7 @@ const App = () => (
               element={
                 <ProtectedRoute roles={['maintenance']}>
                   <MainLayout>
-                    <MaintenanceDashboard />
+                    <StaffReports />
                   </MainLayout>
                 </ProtectedRoute>
               } 

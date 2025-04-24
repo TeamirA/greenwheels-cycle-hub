@@ -30,7 +30,7 @@ const RegisterUser = () => {
     defaultValues: {
       name: '',
       email: '',
-      role: 'user',
+      role: 'staff',
       password: '',
       confirmPassword: ''
     }
@@ -60,20 +60,21 @@ const RegisterUser = () => {
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-graydark">Register New User</h1>
-        <p className="text-muted-foreground">Create accounts for users and staff members</p>
+        <h1 className="text-2xl font-bold dark:text-white">Register New User</h1>
+        <p className="text-muted-foreground dark:text-gray-400">Create accounts for staff members and administrators</p>
       </div>
       
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="name">
+            <label className="block text-sm font-medium mb-1 dark:text-gray-300" htmlFor="name">
               Full Name
             </label>
             <Input
               id="name"
               {...register('name', { required: 'Name is required' })}
               placeholder="John Doe"
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             {errors.name && (
               <p className="text-error text-sm mt-1">{errors.name.message}</p>
@@ -81,7 +82,7 @@ const RegisterUser = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
+            <label className="block text-sm font-medium mb-1 dark:text-gray-300" htmlFor="email">
               Email Address
             </label>
             <Input
@@ -95,6 +96,7 @@ const RegisterUser = () => {
                 }
               })}
               placeholder="john@example.com"
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             {errors.email && (
               <p className="text-error text-sm mt-1">{errors.email.message}</p>
@@ -102,22 +104,22 @@ const RegisterUser = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="role">
+            <label className="block text-sm font-medium mb-1 dark:text-gray-300" htmlFor="role">
               User Role
             </label>
             <select
               id="role"
               {...register('role')}
-              className="w-full border border-input p-2 rounded-md focus:outline-none focus:ring-2"
+              className="w-full border border-input p-2 rounded-md focus:outline-none focus:ring-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
-              <option value="user">Regular User</option>
               <option value="staff">Staff Member</option>
               <option value="admin">Administrator</option>
+              <option value="station-admin">Station Administrator</option>
             </select>
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="password">
+            <label className="block text-sm font-medium mb-1 dark:text-gray-300" htmlFor="password">
               Password
             </label>
             <Input
@@ -131,6 +133,7 @@ const RegisterUser = () => {
                 }
               })}
               placeholder="••••••••"
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             {errors.password && (
               <p className="text-error text-sm mt-1">{errors.password.message}</p>
@@ -138,7 +141,7 @@ const RegisterUser = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="confirmPassword">
+            <label className="block text-sm font-medium mb-1 dark:text-gray-300" htmlFor="confirmPassword">
               Confirm Password
             </label>
             <Input
@@ -148,6 +151,7 @@ const RegisterUser = () => {
                 validate: value => value === password || 'Passwords do not match'
               })}
               placeholder="••••••••"
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             {errors.confirmPassword && (
               <p className="text-error text-sm mt-1">{errors.confirmPassword.message}</p>
@@ -164,24 +168,28 @@ const RegisterUser = () => {
       {/* Confirmation Modal */}
       {showConfirmation && userToConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Confirm Registration</h2>
-              <button onClick={() => setShowConfirmation(false)} className="text-gray-500 hover:text-gray-700">
+              <h2 className="text-xl font-bold dark:text-white">Confirm Registration</h2>
+              <button onClick={() => setShowConfirmation(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                 <X size={20} />
               </button>
             </div>
             
-            <p className="mb-4">Are you sure you want to register the following user?</p>
+            <p className="mb-4 dark:text-gray-300">Are you sure you want to register the following user?</p>
             
-            <div className="bg-graylight p-4 rounded-md mb-4">
-              <p><span className="font-medium">Name:</span> {userToConfirm.name}</p>
-              <p><span className="font-medium">Email:</span> {userToConfirm.email}</p>
-              <p><span className="font-medium">Role:</span> {userToConfirm.role}</p>
+            <div className="bg-graylight dark:bg-gray-700 p-4 rounded-md mb-4">
+              <p className="dark:text-gray-200"><span className="font-medium">Name:</span> {userToConfirm.name}</p>
+              <p className="dark:text-gray-200"><span className="font-medium">Email:</span> {userToConfirm.email}</p>
+              <p className="dark:text-gray-200"><span className="font-medium">Role:</span> {userToConfirm.role}</p>
             </div>
             
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowConfirmation(false)}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              >
                 Cancel
               </Button>
               <Button onClick={confirmRegister}>
