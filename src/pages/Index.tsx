@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,24 @@ import { Bike, ChevronRight, Clock, MapPin } from 'lucide-react';
 import StationMap from '@/components/StationMap';
 import { stations } from '@/data/mockData';
 
+// Create proper interface for station mapping
+interface StationLocationInfo {
+  id: string;
+  name: string;
+  location: { latitude: number; longitude: number } | null;
+}
+
 const Index = () => {
+  // Transform stations data to match the expected format for StationMap
+  const stationLocations: StationLocationInfo[] = stations.map(station => ({
+    id: station.id,
+    name: station.name,
+    location: {
+      latitude: station.coordinates.lat,
+      longitude: station.coordinates.lng
+    }
+  }));
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -87,7 +105,7 @@ const Index = () => {
             <div className="md:w-1/2 h-[400px] rounded-lg overflow-hidden shadow-lg">
               <div className="h-full w-full border border-gray-200 dark:border-gray-700 rounded-lg">
                 <StationMap 
-                  stations={stations} 
+                  stations={stationLocations} 
                   selectedStation={""} 
                   onStationSelect={() => {}} 
                 />

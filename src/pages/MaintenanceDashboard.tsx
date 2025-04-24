@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,13 @@ import StationMap from '@/components/StationMap';
 
 interface MaintenanceDashboardProps {
   reportSource?: 'user' | 'staff';
+}
+
+// Interface for the bike location data
+interface BikeLocationInfo {
+  id: string;
+  name: string;
+  location: { latitude: number; longitude: number } | null;
 }
 
 const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSource }) => {
@@ -28,8 +36,12 @@ const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSourc
       // Filter reports relevant to staff (e.g., high priority or specific issues)
       filteredReports = maintenanceReports.filter(report => report.priority === 'high');
     } else {
-      // Show all user-generated reports by default
-      filteredReports = maintenanceReports.filter(report => report.reporterType === 'user');
+      // Show all user-generated reports by default (using reportedBy field to determine the reporter type)
+      // We'll assume reports reported by users with role 'user' are user-generated
+      filteredReports = maintenanceReports.filter(report => {
+        const reporter = users.find(user => user.id === report.reportedBy);
+        return reporter?.role === 'user';
+      });
     }
     
     setReports(filteredReports);
@@ -47,7 +59,7 @@ const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSourc
   const handleResolve = (reportId: string) => {
     // Update the status of the report to 'resolved'
     const updatedReports = reports.map(report =>
-      report.id === reportId ? { ...report, status: 'resolved' } : report
+      report.id === reportId ? { ...report, status: 'resolved' as const } : report
     );
     setReports(updatedReports);
     
@@ -63,14 +75,17 @@ const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSourc
     setShowMap(true);
   };
   
-  const bikeLocations = bikes.map(bike => {
+  const bikeLocations: BikeLocationInfo[] = bikes.map(bike => {
     const station = stations.find(station => station.id === bike.stationId);
     return {
       id: bike.id,
-      name: bike.name,
-      location: station ? { latitude: station.latitude, longitude: station.longitude } : null,
+      name: bike.model, // Using model property instead of name
+      location: station ? { 
+        latitude: station.coordinates.lat, 
+        longitude: station.coordinates.lng 
+      } : null,
     };
-  }).filter(bike => bike.location !== null);
+  }).filter(bike => bike.location !== null) as BikeLocationInfo[];
   
   return (
     <div className="space-y-6">
@@ -127,7 +142,7 @@ const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSourc
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Reported by: {users.find(user => user.id === report.reporterId)?.name || 'Unknown'}
+                    Reported by: {users.find(user => user.id === report.reportedBy)?.name || 'Unknown'}
                   </p>
                   <div className="flex justify-end mt-4">
                     {report.status === 'pending' && (
@@ -192,7 +207,7 @@ const MaintenanceDashboard: React.FC<MaintenanceDashboardProps> = ({ reportSourc
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Reported by: {users.find(user => user.id === report.reporterId)?.name || 'Unknown'}
+                    Reported by: {users.find(user => user.id === report.reportedBy)?.name || 'Unknown'}
                   </p>
                   <div className="flex justify-end mt-4">
                     {report.status === 'pending' && (

@@ -1,12 +1,18 @@
 
 import { useState, useEffect } from 'react';
-import { Station } from '@/types';
 import { MapPin } from 'lucide-react';
 
+// Updated interface to match what we're passing from Index and MaintenanceDashboard
+interface StationMapLocation {
+  id: string;
+  name: string;
+  location: { latitude: number; longitude: number } | null;
+}
+
 interface StationMapProps {
-  stations: Station[];
-  selectedStation: Station | null;
-  onStationSelect: (station: Station) => void;
+  stations: StationMapLocation[];
+  selectedStation: string; // This is just an ID now
+  onStationSelect: (id: string) => void;
 }
 
 const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapProps) => {
@@ -23,11 +29,13 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
   }, []);
   
   // Function to calculate position based on coordinates
-  const getPositionStyle = (station: Station) => {
+  const getPositionStyle = (station: StationMapLocation) => {
+    if (!station.location) return { left: '50%', top: '50%' };
+    
     // These calculations are simplified for the demo
     // In a real app, these would map to actual geographical coordinates
-    const x = (station.coordinates.lng + 180) / 360 * 100;
-    const y = (90 - station.coordinates.lat) / 180 * 100;
+    const x = (station.location.longitude + 180) / 360 * 100;
+    const y = (90 - station.location.latitude) / 180 * 100;
     
     return {
       left: `${x}%`,
@@ -52,22 +60,21 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
         <div
           key={station.id}
           className={`absolute transition-all duration-300 transform ${
-            selectedStation?.id === station.id ? 'scale-125 z-20' : 'z-10'
+            selectedStation === station.id ? 'scale-125 z-20' : 'z-10'
           }`}
           style={getPositionStyle(station)}
-          onClick={() => onStationSelect(station)}
+          onClick={() => onStationSelect(station.id)}
         >
           <div className="relative -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
             <div className={`
               flex items-center justify-center w-10 h-10 rounded-full 
-              ${selectedStation?.id === station.id 
+              ${selectedStation === station.id 
                 ? 'bg-greenprimary text-white shadow-lg' 
                 : 'bg-white text-greenprimary shadow'
               }
               hover:bg-greenprimary hover:text-white transition-colors
             `}>
               <MapPin size={16} />
-              <span className="text-xs font-bold">{station.availableBikes}</span>
             </div>
             
             {/* Station name tooltip */}
@@ -81,7 +88,7 @@ const StationMap = ({ stations, selectedStation, onStationSelect }: StationMapPr
             </div>
             
             {/* Pulse effect for selected station */}
-            {selectedStation?.id === station.id && (
+            {selectedStation === station.id && (
               <div className="absolute inset-0 rounded-full bg-greenprimary/20 animate-ping" />
             )}
           </div>
