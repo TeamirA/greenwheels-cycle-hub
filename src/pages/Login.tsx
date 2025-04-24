@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bike, UserCheck, ShieldAlert, User } from 'lucide-react';
+import { Bike, UserCheck, ShieldAlert, User, ShieldCheck, UserCheck2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -62,8 +62,8 @@ const Login = () => {
   const demoAccounts = [
     { role: 'Admin', email: 'admin@gmail.com', password: 'password', icon: ShieldAlert },
     { role: 'Staff', email: 'staff@gmail.com', password: 'password', icon: UserCheck },
-    { role: 'User', email: 'michael.brown@example.com', password: 'password', icon: User },
-    { role: 'User', email: 'emily.davis@example.com', password: 'password', icon: User }
+    { role: 'Sation Admin', email: 'stationAdmin@gmail.com', password: 'password', icon: ShieldCheck },
+    { role: 'Maintenance', email: 'maintenance@gmail.com', password: 'password', icon: UserCheck2 }
   ];
 
   const handleDemoLogin = (demoEmail: string, demoPassword: string) => {
