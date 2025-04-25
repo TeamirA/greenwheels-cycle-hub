@@ -8,12 +8,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 interface StationBikesListProps {
   stationName: string;
   bikes: Bike[];
+  itemsPerPage?: number;
 }
 
-const StationBikesList = ({ stationName, bikes }: StationBikesListProps) => {
+const StationBikesList = ({ stationName, bikes, itemsPerPage = 6 }: StationBikesListProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
   const indexOfLastBike = currentPage * itemsPerPage;
   const indexOfFirstBike = indexOfLastBike - itemsPerPage;
@@ -51,11 +51,17 @@ const StationBikesList = ({ stationName, bikes }: StationBikesListProps) => {
                       bike.status === 'in-use' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' : 
                       'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'}`}
                   >
-                    {bike.status.charAt(0).toUpperCase() + bike.status.slice(1)}
+                    {bike.status.charAt(0).toUpperCase() + bike.status.slice(1).replace('-', ' ')}
                   </span>
                 </div>
               </div>
             ))}
+            
+            {currentBikes.length === 0 && (
+              <div className="text-center py-4 text-gray-500">
+                No bikes to display
+              </div>
+            )}
           </div>
 
           {bikes.length > itemsPerPage && (

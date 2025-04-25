@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { stations as initialStations, bikes } from '@/data/mockData';
-import { Station } from '@/types';
+import { Station, Bike } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { MapPin, Bike, Edit } from 'lucide-react';
+import { MapPin, Bike as BikeIcon, Edit } from 'lucide-react';
 import StationMap, { StationMapLocation } from '@/components/StationMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const StationManagement = () => {
   const { toast } = useToast();
@@ -23,7 +24,9 @@ const StationManagement = () => {
   });
   const [mapSelectedStation, setMapSelectedStation] = useState<Station | null>(null);
   
-  // Filter stations based on search
+  const [currentBikesPage, setCurrentBikesPage] = useState(1);
+  const bikesPerPage = 5;
+
   useEffect(() => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -40,6 +43,7 @@ const StationManagement = () => {
   const handleStationSelect = (station: Station) => {
     setSelectedStation(station);
     setMapSelectedStation(station);
+    setCurrentBikesPage(1);
   };
 
   const handleMapPinClick = (stationId: string) => {
@@ -47,11 +51,28 @@ const StationManagement = () => {
     if (station) {
       setSelectedStation(station);
       setMapSelectedStation(station);
+      setCurrentBikesPage(1);
     }
   };
 
   const getBikesAtStation = (stationId: string) => {
     return bikes.filter(bike => bike.stationId === stationId);
+  };
+
+  const getPaginatedBikes = () => {
+    if (!selectedStation) return [];
+    
+    const stationBikes = getBikesAtStation(selectedStation.id);
+    const indexOfLastBike = currentBikesPage * bikesPerPage;
+    const indexOfFirstBike = indexOfLastBike - bikesPerPage;
+    return stationBikes.slice(indexOfFirstBike, indexOfLastBike);
+  };
+  
+  const getTotalBikesPages = () => {
+    if (!selectedStation) return 0;
+    
+    const stationBikes = getBikesAtStation(selectedStation.id);
+    return Math.ceil(stationBikes.length / bikesPerPage);
   };
 
   const handleEditClick = () => {
@@ -70,7 +91,6 @@ const StationManagement = () => {
   const handleEditSubmit = () => {
     if (!selectedStation) return;
     
-    // Validation
     if (editForm.availableBikes > editForm.capacity) {
       toast({
         title: "Validation Error",
@@ -80,7 +100,6 @@ const StationManagement = () => {
       return;
     }
     
-    // Update station
     const updatedStations = stations.map(station => 
       station.id === selectedStation.id 
         ? { 
@@ -95,7 +114,6 @@ const StationManagement = () => {
     
     setStations(updatedStations);
     
-    // Update selected station
     const updatedStation = updatedStations.find(s => s.id === selectedStation.id);
     if (updatedStation) {
       setSelectedStation(updatedStation);
@@ -111,7 +129,6 @@ const StationManagement = () => {
     });
   };
 
-  // Transform stations data for the StationMap component
   const stationLocations: StationMapLocation[] = stations.map(station => ({
     id: station.id,
     name: station.name,
@@ -123,6 +140,10 @@ const StationManagement = () => {
   
   const selectedStationId = mapSelectedStation?.id || '';
 
+  const getTotalStationBikes = (stationId: string) => {
+    return getBikesAtStation(stationId).length;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -131,7 +152,6 @@ const StationManagement = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Stations List */}
         <div className="lg:col-span-1 bg-white rounded-lg shadow p-5 animate-fade-in">
           <div className="mb-4">
             <label htmlFor="search" className="sr-only">Search stations</label>
@@ -178,7 +198,6 @@ const StationManagement = () => {
           </div>
         </div>
 
-        {/* Station Details */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 animate-fade-in">
           {selectedStation ? (
             <div>
@@ -215,8 +234,12 @@ const StationManagement = () => {
                 </div>
               </div>
 
-              {/* Bikes at Station */}
-              <h3 className="text-lg font-medium text-graydark mb-3">Bikes at this Station</h3>
+              <h3 className="text-lg font-medium text-graydark mb-3">
+                Bikes at this Station
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({getTotalStationBikes(selectedStation.id)} total)
+                </span>
+              </h3>
               <div className="overflow-x-auto mb-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -236,7 +259,7 @@ const StationManagement = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {getBikesAtStation(selectedStation.id).map((bike) => (
+                    {getPaginatedBikes().map((bike) => (
                       <tr key={bike.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-graydark">
                           {bike.id}
@@ -258,7 +281,7 @@ const StationManagement = () => {
                         </td>
                       </tr>
                     ))}
-                    {getBikesAtStation(selectedStation.id).length === 0 && (
+                    {getPaginatedBikes().length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-4 py-4 text-center text-sm text-gray-500">
                           No bikes currently at this station
@@ -268,6 +291,18 @@ const StationManagement = () => {
                   </tbody>
                 </table>
               </div>
+              
+              {getTotalStationBikes(selectedStation.id) > bikesPerPage && (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <CustomPagination
+                    currentPage={currentBikesPage}
+                    totalPages={getTotalBikesPages()}
+                    onPageChange={setCurrentBikesPage}
+                    itemsPerPage={bikesPerPage}
+                    totalItems={getTotalStationBikes(selectedStation.id)}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full py-16">
@@ -281,7 +316,6 @@ const StationManagement = () => {
         </div>
       </div>
 
-      {/* Map Section */}
       <div className="bg-white rounded-lg shadow p-6 animate-fade-in">
         <h2 className="text-xl font-semibold text-graydark mb-4">Station Map</h2>
         <div className="h-[400px] rounded-lg overflow-hidden border border-graylight">
@@ -293,7 +327,6 @@ const StationManagement = () => {
         </div>
       </div>
 
-      {/* Edit Station Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
