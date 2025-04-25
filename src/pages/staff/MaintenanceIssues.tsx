@@ -20,7 +20,7 @@ const MaintenanceIssues = () => {
   const [showNewIssueDialog, setShowNewIssueDialog] = useState(false);
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 10;
 
   const availableBikes = bikes.filter(bike => bike.status !== 'maintenance');
 
@@ -139,7 +139,7 @@ const MaintenanceIssues = () => {
         <div className="p-4 border-b border-graylight">
           <h2 className="text-lg font-semibold flex items-center">
             <Wrench className="mr-2" size={18} />
-            Maintenance Issues
+            Maintenance Issues ({filteredReports.length} total)
           </h2>
         </div>
         
@@ -147,40 +147,24 @@ const MaintenanceIssues = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-graylight">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Report ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Bike ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Issue
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Priority
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Reported At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Bike ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Issue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Reported</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentReports.map((report) => (
                 <tr key={report.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.id}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="font-medium text-graydark">{report.bikeId}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-graydark">
-                    {report.bikeId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.issue}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">{report.issue}</td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm text-graydark line-clamp-2">{report.description}</p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold
@@ -201,34 +185,34 @@ const MaintenanceIssues = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {new Date(report.reportedAt).toLocaleString()}
+                    {new Date(report.reportedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.status === 'pending' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="flex items-center"
-                        onClick={() => handleUpdateStatus(report.id, 'in-progress')}
-                      >
-                        <Wrench className="mr-1" size={14} />
-                        Start Work
-                      </Button>
-                    )}
-                    {report.status === 'in-progress' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="flex items-center"
-                        onClick={() => handleUpdateStatus(report.id, 'resolved')}
-                      >
-                        <CheckCircle className="mr-1" size={14} />
-                        Resolve
-                      </Button>
-                    )}
-                    {report.status === 'resolved' && (
-                      <span className="text-xs text-gray-500">No actions</span>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {report.status === 'pending' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleUpdateStatus(report.id, 'in-progress')}
+                        >
+                          <Wrench className="mr-1" size={14} />
+                          Start Work
+                        </Button>
+                      )}
+                      {report.status === 'in-progress' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleUpdateStatus(report.id, 'resolved')}
+                        >
+                          <CheckCircle className="mr-1" size={14} />
+                          Resolve
+                        </Button>
+                      )}
+                      {report.status === 'resolved' && (
+                        <span className="text-xs text-gray-500">No actions</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -236,8 +220,14 @@ const MaintenanceIssues = () => {
           </table>
         </div>
         
-        {filteredReports.length > itemsPerPage && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        {filteredReports.length === 0 && (
+          <div className="p-8 text-center text-gray-500">
+            No maintenance issues found matching your criteria.
+          </div>
+        )}
+        
+        {filteredReports.length > 0 && (
+          <div className="p-4 border-t border-gray-200">
             <CustomPagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -245,12 +235,6 @@ const MaintenanceIssues = () => {
               itemsPerPage={itemsPerPage}
               totalItems={filteredReports.length}
             />
-          </div>
-        )}
-        
-        {filteredReports.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
-            No maintenance issues found matching your criteria.
           </div>
         )}
       </div>
