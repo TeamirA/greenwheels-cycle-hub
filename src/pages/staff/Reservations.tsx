@@ -6,12 +6,15 @@ import { Reservation } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ListCheck, Filter, Search, CheckCircle } from 'lucide-react';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const Reservations = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(reservations);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Show 10 reservations per page
 
   // Filter reservations based on search and status filter
   useMemo(() => {
@@ -35,7 +38,14 @@ const Reservations = () => {
     }
     
     setFilteredReservations(results);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [searchTerm, statusFilter]);
+
+  // Pagination
+  const indexOfLastReservation = currentPage * itemsPerPage;
+  const indexOfFirstReservation = indexOfLastReservation - itemsPerPage;
+  const currentReservations = filteredReservations.slice(indexOfFirstReservation, indexOfLastReservation);
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
 
   // Handle status update
   const handleStatusUpdate = (id: string, newStatus: 'active' | 'completed' | 'overdue' | 'cancelled') => {
@@ -135,7 +145,7 @@ const Reservations = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReservations.map((reservation) => (
+              {currentReservations.map((reservation) => (
                 <tr key={reservation.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-greenprimary">
                     {reservation.code}
@@ -195,6 +205,18 @@ const Reservations = () => {
         {filteredReservations.length === 0 && (
           <div className="p-8 text-center text-gray-500">
             No reservations found matching your criteria.
+          </div>
+        )}
+        
+        {filteredReservations.length > itemsPerPage && (
+          <div className="p-4 border-t border-gray-200">
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredReservations.length}
+            />
           </div>
         )}
       </div>

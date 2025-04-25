@@ -11,7 +11,7 @@ interface StationBikesListProps {
   itemsPerPage?: number;
 }
 
-const StationBikesList = ({ stationName, bikes, itemsPerPage = 6 }: StationBikesListProps) => {
+const StationBikesList = ({ stationName, bikes, itemsPerPage = 5 }: StationBikesListProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 

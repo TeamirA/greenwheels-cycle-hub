@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { bikes, stations } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,9 @@ const AvailableBikes = () => {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentBikePage, setCurrentBikePage] = useState<Record<string, number>>({});
   const itemsPerPage = 6;
+  const bikesPerStation = 5;
   
   // Filter only available bikes
   const availableBikes = bikes.filter(bike => bike.status === 'available');
@@ -46,6 +49,22 @@ const AvailableBikes = () => {
     return battery >= 30 && battery < 80;
   }).length;
   const lowBatteryCount = bikesWithBattery.filter(bike => (bike.batteryPercentage || 0) < 30).length;
+  
+  // Get paginated bikes for a station
+  const getPaginatedBikes = (stationId: string, stationBikes: typeof availableBikes) => {
+    const currentBikePageNumber = currentBikePage[stationId] || 1;
+    const indexOfLastBike = currentBikePageNumber * bikesPerStation;
+    const indexOfFirstBike = indexOfLastBike - bikesPerStation;
+    return stationBikes.slice(indexOfFirstBike, indexOfLastBike);
+  };
+  
+  // Update bike page for a specific station
+  const setBikePageForStation = (stationId: string, page: number) => {
+    setCurrentBikePage(prev => ({
+      ...prev,
+      [stationId]: page
+    }));
+  };
   
   // Handle refresh
   const handleRefresh = () => {
@@ -161,6 +180,11 @@ const AvailableBikes = () => {
             .reduce((sum, bike) => sum + (bike.batteryPercentage || 0), 0) / 
             stationBikes.filter(bike => bike.batteryPercentage !== undefined).length;
           
+          // Get paginated bikes for this station
+          const currentStationBikes = getPaginatedBikes(stationId, stationBikes);
+          const totalStationPages = Math.ceil(stationBikes.length / bikesPerStation);
+          const currentBikePageNumber = currentBikePage[stationId] || 1;
+          
           return (
             <Card key={stationId} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="bg-gray-50 pb-2">
@@ -177,7 +201,7 @@ const AvailableBikes = () => {
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-3">
-                  {stationBikes.map(bike => (
+                  {currentStationBikes.map(bike => (
                     <div key={bike.id} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50">
                       <div className="flex items-center">
                         <BikeIcon size={16} className="mr-2 text-graydark" />
@@ -204,6 +228,19 @@ const AvailableBikes = () => {
                   <p className="text-center py-4 text-gray-500">No available bikes at this station</p>
                 )}
                 
+                {/* Pagination for bikes in this station */}
+                {stationBikes.length > bikesPerStation && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <CustomPagination
+                      currentPage={currentBikePageNumber}
+                      totalPages={totalStationPages}
+                      onPageChange={(page) => setBikePageForStation(stationId, page)}
+                      itemsPerPage={bikesPerStation}
+                      totalItems={stationBikes.length}
+                    />
+                  </div>
+                )}
+                
                 {stationBikes.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-between text-xs text-gray-500">
@@ -228,6 +265,7 @@ const AvailableBikes = () => {
         })}
       </div>
 
+      {/* Station pagination */}
       {stationEntries.length > itemsPerPage && (
         <div className="mt-4">
           <CustomPagination
