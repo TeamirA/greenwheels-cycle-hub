@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { bikes, stations } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,11 +10,13 @@ const AvailableBikes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   
   // Filter only available bikes
   const availableBikes = bikes.filter(bike => bike.status === 'available');
   
-  // Group bikes by station
+  // Group bikes by station first
   const bikesByStation = availableBikes.reduce((acc, bike) => {
     const stationId = bike.stationId;
     if (!acc[stationId]) {
@@ -25,6 +26,12 @@ const AvailableBikes = () => {
     return acc;
   }, {} as Record<string, typeof availableBikes>);
   
+  const stationEntries = Object.entries(bikesByStation);
+  const indexOfLastStation = currentPage * itemsPerPage;
+  const indexOfFirstStation = indexOfLastStation - itemsPerPage;
+  const currentStations = stationEntries.slice(indexOfFirstStation, indexOfLastStation);
+  const totalPages = Math.ceil(stationEntries.length / itemsPerPage);
+
   // Calculate battery stats
   const bikesWithBattery = availableBikes.filter(bike => bike.batteryPercentage !== undefined);
   const totalBatteryPercentage = bikesWithBattery.reduce((sum, bike) => sum + (bike.batteryPercentage || 0), 0);
@@ -143,7 +150,7 @@ const AvailableBikes = () => {
       
       {/* Station Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {Object.entries(bikesByStation).map(([stationId, stationBikes]) => {
+        {currentStations.map(([stationId, stationBikes]) => {
           const station = stations.find(s => s.id === stationId);
           if (!station) return null;
           
@@ -219,6 +226,18 @@ const AvailableBikes = () => {
           );
         })}
       </div>
+
+      {stationEntries.length > itemsPerPage && (
+        <div className="mt-4">
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={stationEntries.length}
+          />
+        </div>
+      )}
     </div>
   );
 };

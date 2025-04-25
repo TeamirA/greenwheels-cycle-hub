@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Bike } from '@/types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface StationBikesListProps {
@@ -11,6 +12,13 @@ interface StationBikesListProps {
 
 const StationBikesList = ({ stationName, bikes }: StationBikesListProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const indexOfLastBike = currentPage * itemsPerPage;
+  const indexOfFirstBike = indexOfLastBike - itemsPerPage;
+  const currentBikes = bikes.slice(indexOfFirstBike, indexOfLastBike);
+  const totalPages = Math.ceil(bikes.length / itemsPerPage);
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
@@ -28,7 +36,7 @@ const StationBikesList = ({ stationName, bikes }: StationBikesListProps) => {
       <CollapsibleContent>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="space-y-2">
-            {bikes.map(bike => (
+            {currentBikes.map(bike => (
               <div 
                 key={bike.id} 
                 className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -49,6 +57,18 @@ const StationBikesList = ({ stationName, bikes }: StationBikesListProps) => {
               </div>
             ))}
           </div>
+
+          {bikes.length > itemsPerPage && (
+            <div className="mt-4">
+              <CustomPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={bikes.length}
+              />
+            </div>
+          )}
         </div>
       </CollapsibleContent>
     </div>

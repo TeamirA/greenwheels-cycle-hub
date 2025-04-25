@@ -10,6 +10,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const MaintenanceIssues = () => {
   const { toast } = useToast();
@@ -18,6 +19,8 @@ const MaintenanceIssues = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [showNewIssueDialog, setShowNewIssueDialog] = useState(false);
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   const availableBikes = bikes.filter(bike => bike.status !== 'maintenance');
 
@@ -44,6 +47,11 @@ const MaintenanceIssues = () => {
     
     return results;
   }, [searchTerm, statusFilter, priorityFilter]);
+
+  const indexOfLastReport = currentPage * itemsPerPage;
+  const indexOfFirstReport = indexOfLastReport - itemsPerPage;
+  const currentReports = filteredReports.slice(indexOfFirstReport, indexOfLastReport);
+  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
 
   const form = useForm({
     defaultValues: {
@@ -163,7 +171,7 @@ const MaintenanceIssues = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReports.map((report) => (
+              {currentReports.map((report) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
                     {report.id}
@@ -227,6 +235,18 @@ const MaintenanceIssues = () => {
             </tbody>
           </table>
         </div>
+        
+        {filteredReports.length > itemsPerPage && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredReports.length}
+            />
+          </div>
+        )}
         
         {filteredReports.length === 0 && (
           <div className="p-8 text-center text-gray-500">

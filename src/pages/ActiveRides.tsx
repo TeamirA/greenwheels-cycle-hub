@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { bikes, stations, users, reservations } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,19 +10,18 @@ const ActiveRides = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Filter only bikes in use
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const activeBikes = bikes.filter(bike => bike.status === 'in-use');
   
-  // Get active reservations
   const activeReservations = reservations.filter(r => 
     r.status === 'active' || r.status === 'overdue'
   );
   
-  // States for ride duration calculation
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshingData, setRefreshingData] = useState(false);
   
-  // Calculate ride time percentages
   const shortRides = activeReservations.filter(r => getMinutesDifference(r.startTime) < 15).length;
   const mediumRides = activeReservations.filter(r => {
     const diff = getMinutesDifference(r.startTime);
@@ -35,7 +33,11 @@ const ActiveRides = () => {
   const mediumRidePercentage = Math.round((mediumRides / activeReservations.length) * 100) || 0;
   const longRidePercentage = Math.round((longRides / activeReservations.length) * 100) || 0;
   
-  // Update current time
+  const indexOfLastRide = currentPage * itemsPerPage;
+  const indexOfFirstRide = indexOfLastRide - itemsPerPage;
+  const currentRides = activeReservations.slice(indexOfFirstRide, indexOfLastRide);
+  const totalPages = Math.ceil(activeReservations.length / itemsPerPage);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -109,7 +111,6 @@ const ActiveRides = () => {
         </Button>
       </div>
       
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="pb-2">
@@ -166,7 +167,6 @@ const ActiveRides = () => {
         </Card>
       </div>
       
-      {/* Active Rides */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-4 border-b border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-graydark dark:text-white">Current Active Rides</h2>
@@ -197,7 +197,7 @@ const ActiveRides = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {activeReservations.map((reservation) => {
+              {currentRides.map((reservation) => {
                 const bike = bikes.find(b => b.id === reservation.bikeId);
                 const station = stations.find(s => s.id === reservation.stationId);
                 const user = users.find(u => u.id === reservation.userId);
@@ -251,7 +251,7 @@ const ActiveRides = () => {
                   </tr>
                 );
               })}
-              {activeReservations.length === 0 && (
+              {currentRides.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     No active rides at the moment
@@ -261,9 +261,20 @@ const ActiveRides = () => {
             </tbody>
           </table>
         </div>
+        
+        {activeReservations.length > itemsPerPage && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={activeReservations.length}
+            />
+          </div>
+        )}
       </div>
       
-      {/* Map Preview */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-graydark dark:text-white mb-4">Ride Locations</h2>
         <div className="h-[400px] bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
