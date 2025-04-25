@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, MapPin, Bike, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const ActiveRides = () => {
   const navigate = useNavigate();

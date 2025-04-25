@@ -55,6 +55,8 @@ export interface MaintenanceReport {
   reportedAt: string;
   resolvedAt: string | null;
   priority: 'low' | 'medium' | 'high';
+  userId?: string; // Adding userId as an optional property
+  staffId?: string; // Adding staffId as an optional property
 }
 
 export interface CommonIssue {

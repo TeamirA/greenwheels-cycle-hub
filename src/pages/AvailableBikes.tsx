@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Battery, Bike as BikeIcon, MapPin, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const AvailableBikes = () => {
   const navigate = useNavigate();
