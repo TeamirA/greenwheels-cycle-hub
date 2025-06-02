@@ -1,287 +1,419 @@
-import { useState, useEffect } from 'react';
-import { bikes, stations, users, reservations } from '@/data/mockData';
+import { useState, useEffect, useCallback } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, MapPin, Bike, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { MapPin, Satellite, Users, Search, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { CustomPagination } from '@/components/ui/custom-pagination';
+import StationMap, { StationMapLocation } from '@/components/StationMap';
+import { useAuth } from '@/contexts/AuthContext';
+import BikeTracker from '../components/BikeTracker';
+import TrackingStats from '../components/TrackingStats';
+import { Input } from '@/components/ui/input';
+
+interface ActiveBike {
+  id: number;
+  bike_number: string;
+  model: string;
+  brand: string;
+  status: string;
+  station_id: number;
+  start_time?: string;
+  user_id?: number;
+  station_name?: string;
+  user_email?: string;
+  created_at?: string;
+  trip_id?: number;
+  tracking_code?: string;
+}
+
+interface BikeLocation {
+  bike_number: string;
+  latitude: number;
+  longitude: number;
+  updated_at: string;
+  user_email?: string;
+}
+
+const ADDIS_BOUNDS = {
+  minLat: 8.9,
+  maxLat: 9.1,
+  minLng: 38.6,
+  maxLng: 38.9
+};
 
 const ActiveRides = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const { authState } = useAuth();
   
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  const activeBikes = bikes.filter(bike => bike.status === 'in-use');
-  
-  const activeReservations = reservations.filter(r => 
-    r.status === 'active' || r.status === 'overdue'
-  );
-  
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [refreshingData, setRefreshingData] = useState(false);
-  
-  const shortRides = activeReservations.filter(r => getMinutesDifference(r.startTime) < 15).length;
-  const mediumRides = activeReservations.filter(r => {
-    const diff = getMinutesDifference(r.startTime);
-    return diff >= 15 && diff < 30;
-  }).length;
-  const longRides = activeReservations.filter(r => getMinutesDifference(r.startTime) >= 30).length;
-  
-  const shortRidePercentage = Math.round((shortRides / activeReservations.length) * 100) || 0;
-  const mediumRidePercentage = Math.round((mediumRides / activeReservations.length) * 100) || 0;
-  const longRidePercentage = Math.round((longRides / activeReservations.length) * 100) || 0;
-  
-  const indexOfLastRide = currentPage * itemsPerPage;
-  const indexOfFirstRide = indexOfLastRide - itemsPerPage;
-  const currentRides = activeReservations.slice(indexOfFirstRide, indexOfLastRide);
-  const totalPages = Math.ceil(activeReservations.length / itemsPerPage);
+  const [activeBikes, setActiveBikes] = useState<ActiveBike[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBike, setSelectedBike] = useState<ActiveBike | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<ActiveBike[]>([]);
+  const [bikeLocations, setBikeLocations] = useState<Record<string, BikeLocation>>({});
+  const [useMockData, setUseMockData] = useState(true);
+
+  const generateMockLocation = useCallback((stationId: string): BikeLocation => {
+    return {
+      bike_number: `MOCK-${stationId}`,
+      latitude: 8.9806,
+      longitude: 38.7578,
+      updated_at: new Date().toISOString()
+    };
+  }, [bikeLocations]);
+
+  const fetchRealBikeLocation = useCallback(async (tripId: number, bikeNumber: string) => {
+    try {
+      console.log('Fetching real location for bike:', bikeNumber);
+      const response = await fetch(`http://127.0.0.1:8000/api/latest_location/${tripId}`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch bike location');
+      }
+
+      const data = await response.json();
+      console.log('Received location data:', data);
+
+      const clampedLat = Math.min(Math.max(data.latitude, ADDIS_BOUNDS.minLat), ADDIS_BOUNDS.maxLat);
+      const clampedLng = Math.min(Math.max(data.longitude, ADDIS_BOUNDS.minLng), ADDIS_BOUNDS.maxLng);
+
+      return {
+        bike_number: bikeNumber,
+        latitude: clampedLat,
+        longitude: clampedLng,
+        updated_at: data.recorded_at,
+        user_email: data.user?.email
+      };
+    } catch (error) {
+      console.error('Error fetching bike location:', error);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    if (!selectedBike) return;
     
-    return () => clearInterval(timer);
-  }, []);
-  
-  function getMinutesDifference(startTimeStr: string): number {
-    const startTime = new Date(startTimeStr);
-    const diffMs = currentTime.getTime() - startTime.getTime();
-    return Math.floor(diffMs / 60000); // convert to minutes
-  }
-  
-  function formatDuration(startTimeStr: string): string {
-    const minutes = getMinutesDifference(startTimeStr);
-    if (minutes < 60) {
-      return `${minutes}m`;
-    } else {
-      const hours = Math.floor(minutes / 60);
-      const remainingMinutes = minutes % 60;
-      return `${hours}h ${remainingMinutes}m`;
-    }
-  }
-  
-  function getRowClass(startTimeStr: string): string {
-    const minutes = getMinutesDifference(startTimeStr);
-    if (minutes > 45) {
-      return 'bg-error/10 dark:bg-error/20';
-    } else if (minutes > 30) {
-      return 'bg-amber-50 dark:bg-amber-900/30';
-    }
-    return '';
-  }
-  
-  const handleRefreshData = () => {
-    setRefreshingData(true);
-    
-    setTimeout(() => {
-      setRefreshingData(false);
-      toast({
-        title: 'Ride Data Refreshed',
-        description: 'Active ride information has been updated',
-        variant: 'default',
+    const intervalId = setInterval(async () => {
+      if (useMockData) {
+        const mockLocation = generateMockLocation(selectedBike.station_id?.toString() || '');
+        setBikeLocations(prev => ({
+          ...prev,
+          [selectedBike.bike_number]: mockLocation
+        }));
+      } else if (selectedBike.trip_id) {
+        const location = await fetchRealBikeLocation(selectedBike.trip_id, selectedBike.bike_number);
+        if (location) {
+          setBikeLocations(prev => ({
+            ...prev,
+            [selectedBike.bike_number]: location
+          }));
+        }
+      }
+    }, 500);
+
+    return () => clearInterval(intervalId);
+  }, [selectedBike, useMockData, generateMockLocation, fetchRealBikeLocation]);
+
+  const fetchActiveBikes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://127.0.0.1:8000/api/bike/active', {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
-    }, 1000);
+      
+      if (!response.ok) {
+        setActiveBikes([]);
+        return;
+      }
+
+      const data = await response.json();
+      
+      let bikes: ActiveBike[] = [];
+      if (typeof data === 'object' && data !== null) {
+        if (Array.isArray(data.bikes)) {
+          bikes = data.bikes;
+        } else if (Array.isArray(data.data)) {
+          bikes = data.data;
+        } else if (Array.isArray(data.results)) {
+          bikes = data.results;
+        }
+      } else if (Array.isArray(data)) {
+        bikes = data;
+      }
+
+      if (authState.role === 'staff' || authState.role === 'admin') {
+        const userStationId = localStorage.getItem('stationId');
+        bikes = bikes.filter(bike => 
+          bike.station_id !== undefined && 
+          String(bike.station_id) === String(userStationId)
+        );
+      }
+
+      setActiveBikes(bikes.map(bike => ({
+        ...bike,
+        trip_id: bike.id
+      })));
+      setSearchResults(bikes);
+    } catch (error) {
+      setActiveBikes([]);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [authState]);
+
+  useEffect(() => {
+    fetchActiveBikes();
+  }, [fetchActiveBikes]);
+
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults(activeBikes);
+      return;
+    }
+
+    const searchTermLower = searchTerm.toLowerCase();
+    const results = activeBikes.filter(bike => 
+      bike.bike_number?.toLowerCase().includes(searchTermLower) ||
+      bike.user_email?.toLowerCase().includes(searchTermLower) ||
+      bike.station_name?.toLowerCase().includes(searchTermLower) ||
+      bike.model?.toLowerCase().includes(searchTermLower)
+    );
+    setSearchResults(results);
+  }, [searchTerm, activeBikes]);
+
+  const handleBikeSelect = (bike: ActiveBike) => {
+    // if (!bike.station_id) {
+    //   console.error('Selected bike has no station_id:', bike);
+    //   return;
+    // }
+
+    setSelectedBike(bike);
+    
+    if (useMockData) {
+      console.log('Generating mock location for bike:', bike);
+      const mockLocation = generateMockLocation(bike.station_id.toString());
+      setBikeLocations(prev => ({
+        ...prev,
+        [bike.bike_number]: mockLocation
+      }));
+    } else if (bike.trip_id) {
+      fetchRealBikeLocation(bike.trip_id, bike.bike_number).then(location => {
+        if (location) {
+          setBikeLocations(prev => ({
+            ...prev,
+            [bike.bike_number]: location
+          }));
+        }
+      });
+    }
   };
-  
+
+  const handleBackToList = () => {
+    setSelectedBike(null);
+  };
+
+  const stationLocations: StationMapLocation[] = [];
+
+  const activeBikeLocations: StationMapLocation[] = selectedBike 
+    ? [{
+        id: `bike-${selectedBike.bike_number}`,
+        name: `Bike #${selectedBike.bike_number}`,
+        location: {
+          latitude: bikeLocations[selectedBike.bike_number]?.latitude || 0,
+          longitude: bikeLocations[selectedBike.bike_number]?.longitude || 0
+        },
+        type: 'bike'
+      }]
+    : [];
+
+  const activeStations = [...new Set(activeBikes.map(bike => bike.station_id))].length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Live Tracking</h2>
+          <p className="text-gray-600">Fetching real-time bike data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/admin-dashboard')}
-            className="mr-2"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-graydark dark:text-white">Active Rides</h1>
-            <p className="text-muted-foreground dark:text-gray-300">Currently ongoing bike rides in the system</p>
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto p-6 space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                <Satellite className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Live Bike Tracking</h1>
+                <p className="text-gray-600">
+                  {authState.role === 'superadmin' 
+                    ? 'Real-time monitoring of all active bike rides'
+                    : 'Monitor active rides at your station in real-time'}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {process.env.NODE_ENV === 'development' && (
+              <Button
+                variant={useMockData ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUseMockData(!useMockData)}
+                className="text-xs"
+              >
+                {useMockData ? 'Using Mock Data' : 'Using Real Data'}
+              </Button>
+            )}
+            
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Live
+            </div>
           </div>
         </div>
-        <Button 
-          onClick={handleRefreshData}
-          disabled={refreshingData}
-        >
-          {refreshingData ? 'Refreshing...' : 'Refresh Data'}
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-300">Active Rides</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold dark:text-white">{activeReservations.length}</div>
-            <p className="text-xs text-muted-foreground dark:text-gray-400">
-              {Math.round((activeReservations.length / bikes.length) * 100)}% of fleet in use
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-300">Short Rides (&lt;15m)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-greenprimary dark:text-green-400">{shortRides}</div>
-            <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2">
-              <div 
-                className="h-full bg-greenprimary dark:bg-green-400 rounded-full" 
-                style={{ width: `${shortRidePercentage}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-300">Medium Rides (15-30m)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-greenaccent dark:text-green-300">{mediumRides}</div>
-            <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2">
-              <div 
-                className="h-full bg-greenaccent dark:bg-green-300 rounded-full" 
-                style={{ width: `${mediumRidePercentage}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-300">Long Rides (&gt;30m)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-500">{longRides}</div>
-            <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2">
-              <div 
-                className="h-full bg-amber-500 rounded-full" 
-                style={{ width: `${longRidePercentage}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-graydark dark:text-white">Current Active Rides</h2>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  Bike
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  From Station
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  Started
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  Duration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {currentRides.map((reservation) => {
-                const bike = bikes.find(b => b.id === reservation.bikeId);
-                const station = stations.find(s => s.id === reservation.stationId);
-                const user = users.find(u => u.id === reservation.userId);
-                
-                return (
-                  <tr key={reservation.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${getRowClass(reservation.startTime)}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                          <User size={16} className="text-graydark dark:text-gray-300" />
-                        </div>
-                        <div className="ml-3">
-                          <div className="font-medium text-graydark dark:text-white">{user?.name || 'Unknown'}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">ID: {reservation.userId.slice(0, 8)}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark dark:text-gray-300">
-                      <div className="flex items-center">
-                        <Bike size={16} className="mr-1 text-graydark dark:text-gray-300" />
-                        <span>{bike?.model || 'Unknown'} ({reservation.bikeId})</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark dark:text-gray-300">
-                      <div className="flex items-center">
-                        <MapPin size={16} className="mr-1 text-greenprimary dark:text-green-400" />
-                        <span>{station?.name || 'Unknown'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark dark:text-gray-300">
-                      {new Date(reservation.startTime).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark dark:text-gray-300">
-                      <div className="flex items-center">
-                        <Clock size={16} className="mr-1 text-graydark dark:text-gray-300" />
-                        <span>{formatDuration(reservation.startTime)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        reservation.status === 'active' 
-                          ? 'bg-greenprimary/20 text-greenprimary dark:bg-green-900/50 dark:text-green-300'
-                          : 'bg-error/20 text-error dark:bg-red-900/50 dark:text-red-300'
-                      }`}>
-                        {reservation.status === 'active' ? 'Active' : 'Overdue'}
+
+        <TrackingStats 
+          activeRides={activeBikes.length}
+          totalStations={activeStations}
+        />
+
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+          <div className="xl:col-span-2 space-y-6">
+            <Card className="border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-green-600" />
+                  Active Rides
+                  <span className="ml-auto bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    {searchResults.length}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="p-4 border-b">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by bike number, user, or station..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[600px] overflow-y-auto p-4">
+                  <BikeTracker 
+                    bikes={searchResults}
+                    selectedBike={selectedBike}
+                    onSelectBike={handleBikeSelect}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {selectedBike && (
+              <Card className="border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <MapPin className="h-5 w-5 text-green-600" />
+                      Tracking Details
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleBackToList}
+                      className="text-gray-600 hover:text-green-600"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to List
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Bike Number</p>
+                      <p className="font-semibold">#{selectedBike.bike_number}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Rider</p>
+                      <p className="font-semibold">{selectedBike.user_email?.split('@')[0] || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Station</p>
+                      <p className="font-semibold">{selectedBike.station_name || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Status</p>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        In Use
                       </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {currentRides.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No active rides at the moment
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {activeReservations.length > itemsPerPage && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <CustomPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={activeReservations.length}
-            />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Tracking Code</p>
+                      <p className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+                        {selectedBike.tracking_code}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Last Update</p>
+                      <p className="font-semibold">
+                        {bikeLocations[selectedBike.bike_number]?.updated_at 
+                          ? new Date(bikeLocations[selectedBike.bike_number].updated_at).toLocaleTimeString()
+                          : 'Just now'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        )}
-      </div>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-graydark dark:text-white mb-4">Ride Locations</h2>
-        <div className="h-[400px] bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <MapPin size={32} className="mx-auto text-greenprimary dark:text-green-400 mb-2" />
-            <p className="text-graydark dark:text-gray-300">Interactive ride map would be displayed here</p>
+
+          <div className="xl:col-span-3">
+            <Card className="border-0 bg-white/80 backdrop-blur-sm h-[700px] relative" style={{ zIndex: 1 }}>
+              <CardHeader className="pb-4 relative" style={{ zIndex: 2 }}>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Satellite className="h-5 w-5 text-green-600" />
+                  Live Map View
+                  {selectedBike && (
+                    <span className="ml-auto text-sm font-normal text-gray-600">
+                      Tracking Bike #{selectedBike.bike_number}
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 h-[calc(100%-80px)] relative" style={{ zIndex: 1 }}>
+                <div className="h-full rounded-lg overflow-hidden relative">
+                  <StationMap 
+                    stations={stationLocations}
+                    bikes={activeBikeLocations}
+                    selectedStation={selectedBike ? `station-${selectedBike.station_id}` : ""}
+                    selectedBike={selectedBike ? `bike-${selectedBike.bike_number}` : ""}
+                    onStationSelect={() => {}}
+                    bounds={ADDIS_BOUNDS}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

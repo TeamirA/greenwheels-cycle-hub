@@ -73,10 +73,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     if (authState.role === 'superadmin') {
       return [
         { name: 'Dashboard', path: '/admin-dashboard', icon: <LayoutDashboard size={20} /> },
-        { name: 'All Users', path: '/superadmin/users', icon: <Users size={20} /> },
-        { name: 'User Management', path: '/user-management', icon: <UserCheck size={20} /> },
         { name: 'Bike Fleet', path: '/bike-fleet', icon: <Bike size={20} /> },
         { name: 'Stations', path: '/station-management', icon: <MapPin size={20} /> },
+        { name: 'Users', path: '/user-management', icon: <Users size={20} /> },
         { name: 'User Verification', path: '/user-verification', icon: <UserCheck size={20} /> },
         { name: 'Active Rides', path: '/active-rides', icon: <Car size={20} /> },
         { name: 'Available Bikes', path: '/available-bikes', icon: <Bike size={20} /> },
@@ -88,7 +87,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     } else if (authState.role === 'admin') {
       return [
         { name: 'Dashboard', path: '/station-admin-dashboard', icon: <LayoutDashboard size={20} /> },
-        { name: 'My Station Team', path: '/my-station-staff', icon: <Users size={20} /> },
+        { name: 'Station Staff', path: '/station-staff', icon: <Users size={20} /> },
         { name: 'Station Bikes', path: '/station-bikes', icon: <Bike size={20} /> },
         { name: 'Register Staff', path: '/register-station-staff', icon: <UserPlus size={20} /> },
         { name: 'Station Reports', path: '/station-reports', icon: <FileText size={20} /> },
@@ -117,7 +116,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <NotificationContext.Provider value={{ verificationCount, setVerificationCount }}>
       <div className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900 text-white' : 'bg-graylight text-graydark'} flex flex-col`}>
-        <header className={`${darkMode ? 'bg-gray-800' : 'bg-greenprimary text-white'} shadow-md z-30 sticky top-0 w-full`}> {/* Make header sticky */}
+        <header className={`${darkMode ? 'bg-gray-800' : 'bg-greenprimary text-white'} shadow-md z-30 fixed top-0 w-full`}> {/* Make header sticky */}
           <div className="container mx-auto px-4 py-3 flex justify-between items-center">
             <div className="flex items-center">
               {authState.isAuthenticated && (
@@ -128,10 +127,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   {isOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
               )}
-              <div className="flex items-center space-x-2">
+              <Link to="/" className="flex items-center space-x-2">
                 <Bike className="h-8 w-8" />
                 <span className="text-xl font-bold">GreenWheels</span>
-              </div>
+              </Link>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -190,26 +189,29 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
 
-        <div className="flex flex-1">
+        {/* Add pt-[56px] to push content below navbar for both sidebar and main */}
+        <div
+          className={cn(
+            "flex flex-1 pt-[56px]"
+          )}
+        >
           {authState.isAuthenticated && (
             <>
-              <div 
+              {/* Sidebar: static on md+ screens, fixed on mobile */}
+              <aside
                 className={cn(
-                  "fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden transition-opacity",
-                  isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                )}
-                onClick={() => setIsOpen(false)}
-              />
-              <aside 
-                className={cn(
-                  "shadow-lg fixed left-0 top-[56px] h-[calc(100vh-56px)] z-30 transform transition-all",
+                  "shadow-lg z-30 transform transition-all h-[calc(100vh-56px)]",
+                  // Mobile: fixed and overlays content
+                  "fixed left-0 top-0 md:static md:top-0 md:left-0",
                   isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-                  isSidebarCollapsed ? "w-14" : "w-56",
-                  darkMode ? "bg-gray-800 text-white" : "bg-white text-graydark"
+                  isSidebarCollapsed ? "w-16" : "w-64",
+                  darkMode ? "bg-gray-800 text-white" : "bg-white text-graydark",
+                  // Hide sidebar on mobile if not open
+                  "md:block"
                 )}
               >
                 <div className="flex justify-end p-2">
-                  <button 
+                  <button
                     onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
                     className={`hidden md:flex p-1 rounded-md ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-graylight text-graydark'}`}
                   >
@@ -234,7 +236,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                       {!isSidebarCollapsed && <span>{link.name}</span>}
                     </Link>
                   ))}
-                  
                   <button
                     onClick={handleLogout}
                     className={cn(
@@ -248,21 +249,25 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   </button>
                 </nav>
               </aside>
+              {/* Overlay for mobile only */}
+              <div
+                className={cn(
+                  "fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden transition-opacity",
+                  isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+                onClick={() => setIsOpen(false)}
+              />
             </>
           )}
 
-          <main className={cn(
-            "flex-1 transition-all duration-300",
-            authState.isAuthenticated ? (
-              isSidebarCollapsed 
-                ? "md:ml-14"
-                : "md:ml-56"
-            ) : "",
-            "p-6"
-          )}>
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+          <main
+            className={cn(
+              "flex-1 p-6 transition-colors",
+              authState.isAuthenticated && !isSidebarCollapsed ? "md:ml-64" : "",
+              authState.isAuthenticated && isSidebarCollapsed ? "md:ml-16" : ""
+            )}
+          >
+            {children}
           </main>
         </div>
       </div>

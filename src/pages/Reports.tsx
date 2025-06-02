@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { maintenanceReports, getBikeSummary, getStationSummary, getMaintenanceSummary, bikes } from '@/data/mockData';
 import { MaintenanceReport } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,10 @@ const Reports = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [filteredReports, setFilteredReports] = useState<MaintenanceReport[]>(maintenanceReports);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const PAGE_SIZE = 10;
   const bikeSummary = getBikeSummary();
   const stationSummary = getStationSummary();
   const maintenanceSummary = getMaintenanceSummary();
@@ -57,6 +60,41 @@ const Reports = () => {
     
     setFilteredReports(filtered);
   };
+
+  useEffect(() => {
+    const fetchMaintenanceReports = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/bike/maintenance?page=${page}&limit=${PAGE_SIZE}`);
+        if (response.status === 404) {
+          // No maintenance endpoint or no data, treat as empty but not error
+          setFilteredReports([]);
+          setTotalPages(1);
+        } else if (!response.ok) {
+          throw new Error('Failed to fetch maintenance reports');
+        } else {
+          const data = await response.json();
+          setFilteredReports(data.data || []);
+          setTotalPages(Math.ceil((data.total || 0) / PAGE_SIZE));
+        }
+      } catch (err) {
+        // Only show toast if it's a real error, not just empty data
+        if (!(err instanceof Error && err.message.includes('404'))) {
+          toast({
+            title: 'Error',
+            description: 'Could not fetch maintenance reports.',
+            variant: 'destructive',
+          });
+        }
+        setFilteredReports([]);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMaintenanceReports();
+    // eslint-disable-next-line
+  }, [page]);
 
   return (
     <div className="space-y-6">
@@ -265,79 +303,101 @@ const Reports = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Report ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Bike
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Issue
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Reported
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Priority
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReports.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-graydark">
-                    {report.bikeId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.issue}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {new Date(report.reportedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                      ${report.priority === 'high' ? 'bg-error/20 text-error' : 
-                        report.priority === 'medium' ? 'bg-greenaccent/30 text-graydark' : 
-                        'bg-gray-100 text-gray-500'}`}
-                    >
-                      {report.priority.charAt(0).toUpperCase() + report.priority.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center">
-                      {report.status === 'pending' ? (
-                        <Clock size={14} className="text-gray-500 mr-1" />
-                      ) : report.status === 'in-progress' ? (
-                        <AlertTriangle size={14} className="text-greenaccent mr-1" />
-                      ) : (
-                        <Check size={14} className="text-greenprimary mr-1" />
-                      )}
-                      <span className={
-                        report.status === 'pending' ? 'text-gray-500' : 
-                        report.status === 'in-progress' ? 'text-graydark' : 
-                        'text-greenprimary'
-                      }>
-                        {report.status.charAt(0).toUpperCase() + report.status.slice(1).replace('-', ' ')}
-                      </span>
-                    </div>
-                  </td>
+          {loading ? (
+            <div className="p-6 text-center text-gray-500">Loading maintenance reports...</div>
+          ) : filteredReports.length === 0 ? null : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Report ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Bike
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Issue
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Reported
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Priority
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                    Status
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredReports.map((report) => {
+                  // Map backend fields to expected fields
+                  const id = report.id || report.maintenance_id || '';
+                  const bikeId = report.bikeId || report.bike_number || '';
+                  const issue = report.issue || report.reason || '';
+                  const reportedAt = report.reportedAt || (report as any).created_at || '';
+                  const priority = report.priority || 'unknown';
+                  const status = report.status || report.maintenance_status || 'unknown';
+                  return (
+                    <tr key={id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
+                        {id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-graydark">
+                        {bikeId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
+                        {issue}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
+                        {reportedAt ? new Date(reportedAt).toLocaleDateString() : ''}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                          ${priority === 'high' ? 'bg-error/20 text-error' : 
+                            priority === 'medium' ? 'bg-greenaccent/30 text-graydark' : 
+                            'bg-gray-100 text-gray-500'}`}
+                        >
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center">
+                          {status === 'pending' ? (
+                            <Clock size={14} className="text-gray-500 mr-1" />
+                          ) : status === 'in-progress' || status === 'in_progress' ? (
+                            <AlertTriangle size={14} className="text-greenaccent mr-1" />
+                          ) : status === 'resolved' ? (
+                            <Check size={14} className="text-greenprimary mr-1" />
+                          ) : null}
+                          <span className={
+                            status === 'pending' ? 'text-gray-500' : 
+                            status === 'in-progress' || status === 'in_progress' ? 'text-graydark' : 
+                            status === 'resolved' ? 'text-greenprimary' : 'text-gray-400'
+                          }>
+                            {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
-
-        <div className="p-4 text-sm text-gray-500">
-          Displaying {filteredReports.length} of {maintenanceReports.length} reports
+        <div className="flex justify-between items-center p-4 border-t">
+          {filteredReports.length > 0 && (
+            <>
+              <span className="text-sm text-gray-500">
+                Page {page} of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+                <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,74 +1,109 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bike, UserCheck, ShieldAlert, User, ShieldCheck, UserCheck2 } from 'lucide-react';
+import { Bike, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import axios from 'axios';
 
 const Login = () => {
-  const { login, authState } = useAuth();
+  const { authState, setAuthState } = useAuth(); // Get setAuthState from context
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const [email, setEmail] = useState('');
+
+  const [ep, setEp] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
-      const success = await login(email, password);
-      
-      if (success) {
+      const response = await axios.post('http://127.0.0.1:8000/api/login', 
+        { ep, password }, 
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      const { role, token, user, message } = response.data;
+
+      if (role && token) {
+        // Update auth state directly
+        setAuthState({
+          user: user || null,
+          role,
+          token,
+          isAuthenticated: true,
+        });
+
+        // Set axios default header for future requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Save to localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('auth', JSON.stringify({
+          user: user || null,
+          role,
+          token,
+          isAuthenticated: true,
+        }));
+
         toast({
           title: 'Login successful',
           description: 'Welcome to GreenWheels!',
           variant: 'default',
         });
-        
-        // Role-based redirect
-        if (authState.role === 'admin') {
-          navigate('/admin-dashboard');
-        } else if (authState.role === 'staff') {
-          navigate('/staff-panel');
-        } else {
-          navigate('/');
+
+        // Navigate based on role
+        switch (role) {
+          case 'superadmin':
+            navigate('/admin-dashboard');
+            break;
+          case 'admin':
+            navigate('/station-admin-dashboard');
+            break;
+          case 'staff':
+            navigate('/staff-panel');
+            break;
+          case 'maintenance':
+            navigate('/maintenance-dashboard');
+            break;
+          default:
+            navigate('/staff-panel');
+            break;
         }
       } else {
-        setError('Invalid email or password');
+        setError('Invalid credentials');
         toast({
           title: 'Login failed',
           description: 'Please check your credentials',
           variant: 'destructive',
         });
       }
-    } catch (err) {
-      setError('An error occurred during login');
-      console.error(err);
+    } catch (err: any) {
+      if (err.response) {
+        console.error('Backend Error:', err.response.data);
+        setError(err.response.data.message || 'An error occurred during login');
+      } else if (err.request) {
+        console.error('Network Error:', err.request);
+        setError('Unable to connect to the server. Please try again later.');
+      } else {
+        console.error('Error:', err.message);
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  // Demo account credentials
-  const demoAccounts = [
-    { role: 'Admin', email: 'admin@gmail.com', password: 'password', icon: ShieldAlert },
-    { role: 'Staff', email: 'staff@gmail.com', password: 'password', icon: UserCheck },
-    { role: 'Sation Admin', email: 'stationAdmin@gmail.com', password: 'password', icon: ShieldCheck },
-    { role: 'Maintenance', email: 'maintenance@gmail.com', password: 'password', icon: UserCheck2 }
-  ];
-
-  const handleDemoLogin = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
   };
 
   return (
@@ -78,7 +113,9 @@ const Login = () => {
           <Link to="/" className="inline-flex items-center justify-center">
             <Bike size={40} className="text-greenprimary" />
           </Link>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-graydark dark:text-white">Sign in to GreenWheels</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-graydark dark:text-white">
+            Sign in to GreenWheels
+          </h1>
           <p className="mt-2 text-sm text-graydark dark:text-gray-300">
             Enter your credentials to access your account
           </p>
@@ -92,7 +129,7 @@ const Login = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div className="form-input-animated" style={{ '--input-index': 0 } as React.CSSProperties}>
+            <div>
               <label htmlFor="email" className="block text-sm font-medium text-graydark mb-1 dark:text-gray-300">
                 Email address
               </label>
@@ -103,71 +140,52 @@ const Login = () => {
                 autoComplete="email"
                 required
                 className="block w-full text-graydark dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={ep}
+                onChange={(e) => setEp(e.target.value)}
                 disabled={loading}
               />
             </div>
 
-            <div className="form-input-animated" style={{ '--input-index': 1 } as React.CSSProperties}>
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-graydark mb-1 dark:text-gray-300">
                 Password
               </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="block w-full text-graydark dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  className="block w-full text-graydark dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              <div className="flex justify-end mt-2">
+                <Link to="/forgot-password" className="text-xs text-greenprimary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="form-input-animated" style={{ '--input-index': 2 } as React.CSSProperties}>
-            <Button 
-              type="submit"
-              className="w-full bg-greenprimary hover:bg-greenprimary/80 text-white"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            className="w-full bg-greenprimary hover:bg-greenprimary/80 text-white"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+          </Button>
         </form>
-
-        <div className="mt-6">
-          <Separator className="mb-4" />
-          <h3 className="text-sm font-medium text-center text-graydark mb-3 dark:text-gray-300">Demo Accounts</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {demoAccounts.map((account, index) => (
-              <Card key={index} className="bg-gray-50 dark:bg-gray-700 border-none shadow-sm overflow-hidden">
-                <CardHeader className="py-2 px-3 bg-gray-100 dark:bg-gray-600 flex flex-row items-center">
-                  <account.icon className="h-4 w-4 mr-2 text-graydark dark:text-gray-300" />
-                  <CardTitle className="text-sm font-medium">{account.role}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 space-y-1">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-                    <span>Email:</span> <span className="font-mono font-medium text-graydark dark:text-gray-300">{account.email}</span>
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-                    <span>Password:</span> <span className="font-mono font-medium text-graydark dark:text-gray-300">{account.password}</span>
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="w-full mt-2 text-xs h-7 text-greenprimary hover:text-greenprimary/80 hover:bg-greenprimary/10"
-                    onClick={() => handleDemoLogin(account.email, account.password)}
-                  >
-                    Use This Account
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

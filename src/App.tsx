@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import MainLayout from "@/components/layouts/MainLayout";
 
+import LandingPage from "./pages/LandingPage";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,10 +28,15 @@ import CreateStation from "./pages/admin/CreateStation";
 import StationAdminDashboard from "./pages/StationAdminDashboard";
 import RegisterStationStaff from "./pages/RegisterStationStaff";
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
-
+import ChangePassword from "./pages/ChangePassword";
+import UserVerification from '@/pages/UserVerification';
+import ForgotPassword from '@/pages/ForgotPassword';
+import MyStationStaff from '@/pages/MyStationStaff';
+import StationBikes from '@/pages/StationBikes';
+import Users from '@/pages/superadmin/Users';
 // Define MaintenanceDashboardWithProps to handle the reportSource prop
 const StaffReports = () => <MaintenanceDashboard reportSource="staff" />;
-const UserReports = () => <MaintenanceDashboard />;
+const UserReports = () => <MaintenanceDashboard reportSource="user" />;
 
 const queryClient = new QueryClient();
 
@@ -42,15 +48,18 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/dashboard" element={<MainLayout><Index /></MainLayout>} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+      
             <Route path="/unauthorized" element={<Unauthorized />} />
             
             {/* Admin Routes */}
             <Route 
               path="/admin-dashboard" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <AdminDashboard />
                   </MainLayout>
@@ -60,7 +69,7 @@ const App = () => (
             <Route 
               path="/station-management" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <StationManagement />
                   </MainLayout>
@@ -70,7 +79,7 @@ const App = () => (
             <Route 
               path="/user-management" 
               element={
-                <ProtectedRoute roles={['admin', 'station-admin']}>
+                <ProtectedRoute roles={['superadmin', 'admin']}>
                   <MainLayout>
                     <UserManagement />
                   </MainLayout>
@@ -80,7 +89,7 @@ const App = () => (
             <Route 
               path="/reports" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <Reports />
                   </MainLayout>
@@ -92,7 +101,7 @@ const App = () => (
             <Route 
               path="/register-user" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <RegisterUser />
                   </MainLayout>
@@ -102,7 +111,7 @@ const App = () => (
             <Route 
               path="/register-bike" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <RegisterBike />
                   </MainLayout>
@@ -112,7 +121,7 @@ const App = () => (
             <Route 
               path="/create-station" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <CreateStation />
                   </MainLayout>
@@ -124,7 +133,7 @@ const App = () => (
             <Route 
               path="/station-admin-dashboard" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
                   <MainLayout>
                     <StationAdminDashboard />
                   </MainLayout>
@@ -132,11 +141,11 @@ const App = () => (
               } 
             />
             <Route 
-              path="/station-staff" 
+              path="/my-station-staff" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
                   <MainLayout>
-                    <UserManagement />
+                    <MyStationStaff />
                   </MainLayout>
                 </ProtectedRoute>
               } 
@@ -144,7 +153,17 @@ const App = () => (
             <Route 
               path="/station-bikes" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
+                  <MainLayout>
+                    <StationBikes />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/available-bikes" 
+              element={
+                <ProtectedRoute roles={['superadmin', 'staff', 'admin']}>
                   <MainLayout>
                     <AvailableBikes />
                   </MainLayout>
@@ -154,7 +173,7 @@ const App = () => (
             <Route 
               path="/register-station-staff" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
                   <MainLayout>
                     <RegisterStationStaff />
                   </MainLayout>
@@ -164,7 +183,7 @@ const App = () => (
             <Route 
               path="/maintenance-team" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
                   <MainLayout>
                     <UserManagement />
                   </MainLayout>
@@ -174,7 +193,7 @@ const App = () => (
             <Route 
               path="/station-reports" 
               element={
-                <ProtectedRoute roles={['station-admin']}>
+                <ProtectedRoute roles={['admin']}>
                   <MainLayout>
                     <Reports />
                   </MainLayout>
@@ -188,7 +207,7 @@ const App = () => (
               element={
                 <ProtectedRoute roles={['maintenance']}>
                   <MainLayout>
-                    <MaintenanceDashboard />
+                    <MaintenanceDashboard reportSource="maintenance" />
                   </MainLayout>
                 </ProtectedRoute>
               } 
@@ -218,7 +237,7 @@ const App = () => (
               element={
                 <ProtectedRoute roles={['maintenance']}>
                   <MainLayout>
-                    <MaintenanceDashboard />
+                    <MaintenanceDashboard reportSource="maintenance" />
                   </MainLayout>
                 </ProtectedRoute>
               } 
@@ -228,7 +247,7 @@ const App = () => (
             <Route 
               path="/bike-fleet" 
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['superadmin']}>
                   <MainLayout>
                     <BikeFleet />
                   </MainLayout>
@@ -238,19 +257,9 @@ const App = () => (
             <Route 
               path="/active-rides" 
               element={
-                <ProtectedRoute roles={['admin', 'staff', 'station-admin']}>
+                <ProtectedRoute roles={['superadmin', 'staff', 'admin']}>
                   <MainLayout>
                     <ActiveRides />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/available-bikes" 
-              element={
-                <ProtectedRoute roles={['admin', 'staff', 'station-admin']}>
-                  <MainLayout>
-                    <AvailableBikes />
                   </MainLayout>
                 </ProtectedRoute>
               } 
@@ -260,7 +269,7 @@ const App = () => (
             <Route 
               path="/staff-panel" 
               element={
-                <ProtectedRoute roles={['staff', 'admin']}>
+                <ProtectedRoute roles={['staff', 'superadmin']}>
                   <MainLayout>
                     <StaffPanel />
                   </MainLayout>
@@ -270,7 +279,7 @@ const App = () => (
             <Route 
               path="/reservations" 
               element={
-                <ProtectedRoute roles={['staff', 'admin', 'station-admin']}>
+                <ProtectedRoute roles={['staff', 'admin', 'superadmin']}>
                   <MainLayout>
                     <Reservations />
                   </MainLayout>
@@ -280,9 +289,45 @@ const App = () => (
             <Route 
               path="/maintenance-issues" 
               element={
-                <ProtectedRoute roles={['staff', 'admin', 'station-admin']}>
+                <ProtectedRoute roles={['staff', 'admin', 'superadmin']}>
                   <MainLayout>
                     <MaintenanceIssues />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Change Password Route */}
+            <Route 
+              path="/change-password" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ChangePassword />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* User Verification Route */}
+            <Route 
+              path="/user-verification" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <UserVerification />
+                  </MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Superadmin Routes */}
+            <Route 
+              path="/superadmin/users" 
+              element={
+                <ProtectedRoute roles={['superadmin']}>
+                  <MainLayout>
+                    <Users />
                   </MainLayout>
                 </ProtectedRoute>
               } 

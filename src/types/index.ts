@@ -1,14 +1,30 @@
+export type UserRole = 'superadmin' | 'staff'  | 'admin' | 'maintenance';
 
-export type UserRole = 'admin' | 'staff' | 'user' | 'station-admin' | 'maintenance';
+export interface TeamMember {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  role: 'staff' | 'admin' | 'maintenance';
+  station_id: number;
+  station_name: string;
+  national_id_number: string;
+}
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  national_id: string;
+  createdAt: string | null;
+  join_date: string | null;
+  stationId: number;
+  station_name: string;
   verified: boolean;
-  createdAt: string;
-  stationId?: string; // For station staff and maintenance staff
+  phone: string;
+  status: 'active' | 'inactive' | 'pending';
 }
 
 export type BikeStatus = 'available' | 'in-use' | 'maintenance';
@@ -18,18 +34,20 @@ export interface Bike {
   id: string;
   model: string;
   status: BikeStatus;
-  stationId: string;
+  station_id: string;
   lastMaintenance: string;
   totalRides: number;
   category: BikeCategory;
-  batteryPercentage?: number; // Adding batteryPercentage as an optional property
+  bike_number: string;
+  brand: string;
+  battery_level?: number; // Optional battery level property
 }
 
 export interface Station {
   id: string;
   name: string;
   location: string;
-  capacity: number;
+  total_capacity: number;
   availableBikes: number;
   coordinates: { lat: number; lng: number };
 }
@@ -48,15 +66,25 @@ export interface Reservation {
 export interface MaintenanceReport {
   id: string;
   bikeId: string;
-  reportedBy: string;
+  stationId?: string;
+  stationName?: string;
   issue: string;
-  description: string;
+  priority: 'high' | 'medium' | 'low';
   status: 'pending' | 'in-progress' | 'resolved';
   reportedAt: string;
-  resolvedAt: string | null;
-  priority: 'low' | 'medium' | 'high';
-  userId?: string; // Adding userId as an optional property
-  staffId?: string; // Adding staffId as an optional property
+  resolvedAt?: string;
+  notes?: string;
+  bike_number?: string;
+  reason?: string;
+  description?: string;
+  reported_by?: string;
+  phone_number?: string;
+  maintenance_status?: string;
+  role?: string;
+  email?: string;
+  maintenance_id?: string;
+  start_time?: string;
+  location?: string;
 }
 
 export interface CommonIssue {

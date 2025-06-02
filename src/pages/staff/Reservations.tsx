@@ -1,7 +1,6 @@
-
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { reservations, getUserById, bikes } from '@/data/mockData';
+import { getUserById, bikes } from '@/data/mockData';
 import { Reservation } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,36 +9,76 @@ import { CustomPagination } from '@/components/ui/custom-pagination';
 
 const Reservations = () => {
   const { toast } = useToast();
+  const [reservations, setReservations] = useState<Reservation[]>([]); // Fetch reservations dynamically
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(reservations);
+  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Show 10 reservations per page
 
+  // Fetch reservations from the API
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/bikes/1/reserved', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (response.status === 404) {
+            console.warn('No reserved bikes found:', errorText);
+            setReservations([]); // Set an empty array if no reservations are found
+            setFilteredReservations([]); // Ensure filtered reservations are also empty
+            return;
+          }
+          console.error('Failed to fetch reservations:', response.status, errorText);
+          throw new Error(`Error ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        setReservations(data); // Assume the API returns an array of reservations
+        setFilteredReservations(data); // Initialize filtered reservations
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch reservations. Please try again later.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    fetchReservations();
+  }, [toast]);
+
   // Filter reservations based on search and status filter
   useMemo(() => {
-    let results = reservations;
-    
+    let results = [...reservations];
+
     // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(reservation => reservation.status === statusFilter);
     }
-    
+
     // Apply search term filter
     if (searchTerm) {
       const lowercasedFilter = searchTerm.toLowerCase();
       results = results.filter(
-        reservation => 
+        reservation =>
           reservation.id.toLowerCase().includes(lowercasedFilter) ||
           reservation.bikeId.toLowerCase().includes(lowercasedFilter) ||
           reservation.userId.toLowerCase().includes(lowercasedFilter) ||
           (reservation.code && reservation.code.toLowerCase().includes(lowercasedFilter))
       );
     }
-    
+
     setFilteredReservations(results);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, reservations]);
 
   // Pagination
   const indexOfLastReservation = currentPage * itemsPerPage;

@@ -1,130 +1,395 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { bikes, reservations, stations, getUserById } from '@/data/mockData';
+import { getUserById } from '@/data/mockData';
 import { Bike as BikeIcon, MapPin, Search, Wrench, Car } from 'lucide-react';
 import StationMap, { StationMapLocation } from '@/components/StationMap';
+import { endTrip } from "@/api/staff";
+import TripReceiptStaff from '@/components/TripReceiptStaff';
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 const StaffPanel = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
+  const [stations, setStations] = useState<any[]>([]);
+  const [bikes, setBikes] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
+
   const [reservationCode, setReservationCode] = useState('');
+  const [endTripCode, setEndTripCode] = useState('');
   const [bikeDetails, setBikeDetails] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedStation, setSelectedStation] = useState(stations[0]);
+  const [isEndingTrip, setIsEndingTrip] = useState(false);
+  const [selectedStation, setSelectedStation] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [endTripError, setEndTripError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [currentTrip, setCurrentTrip] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/stations', {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    })
+      .then(async res => {
+        if (!res.ok) return;
+        try {
+          const data = await res.json();
+          const stationsArr = Array.isArray(data) ? data : data.stations || [];
+          setStations(stationsArr);
+          if (stationsArr.length > 0) setSelectedStation(stationsArr[0]);
+        } catch {
+          setStations([]);
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/bikes', {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    })
+      .then(async res => {
+        if (!res.ok) return;
+        try {
+          const data = await res.json();
+          const bikesArr = Array.isArray(data) ? data : data.bikes || [];
+          setBikes(bikesArr);
+        } catch {
+          setBikes([]);
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/reservations', {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    })
+      .then(async res => {
+        if (!res.ok) return;
+        try {
+          const data = await res.json();
+          const reservationsArr = Array.isArray(data) ? data : data.reservations || [];
+          setReservations(reservationsArr);
+        } catch {
+          setReservations([]);
+        }
+      });
+  }, []);
+
+  // Fetch active bikes from backend API
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/bikes/1/available', {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    })
+      .then(async res => {
+        if (!res.ok) return;
+        try {
+          const data = await res.json();
+          // Expecting an array of bikes with latitude/longitude and status === 'in-use'
+          if (Array.isArray(data)) {
+            // Merge with bikes state if needed, or use separately for map
+            // Example: setActiveBikes(data);
+            // For now, just log for debugging:
+            console.log('Active bikes from API:', data);
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      });
+  }, []);
+
+  const stationBikes = bikes.filter(bike => bike.station_id === selectedStation?.id);
+  const filteredBikes = stationBikes.filter(bike => 
+    bike.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    bike.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
-  const stationBikes = bikes.filter(bike => bike.stationId === selectedStation.id);
-  
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     if (!reservationCode.trim()) {
       setErrorMessage('Please enter a reservation code');
       return;
     }
-    
+
     setIsProcessing(true);
     setErrorMessage('');
-    
-    setTimeout(() => {
-      const reservation = reservations.find(
-        r => r.code && r.code.toLowerCase() === reservationCode.trim().toLowerCase()
-      );
-      
-      if (reservation) {
-        const bike = bikes.find(b => b.id === reservation.bikeId);
-        const user = getUserById(reservation.userId);
-        
-        if (bike && user) {
-          setBikeDetails({
-            id: bike.id,
-            model: bike.model,
-            category: bike.category,
-            status: bike.status,
-            userName: user.name,
-            userId: user.id,
-            reservation: reservation
-          });
-          
-          toast({
-            title: 'Reservation Verified',
-            description: 'Bike details retrieved successfully',
-            variant: 'default',
-          });
-        } else {
-          setErrorMessage('Error retrieving bike or user details');
-        }
-      } else {
-        setErrorMessage('Invalid reservation code. Please check and try again.');
+
+    // Always use the latest code from the input, not from bikeDetails or previous state
+    const codeToCheck = reservationCode.trim().toUpperCase().startsWith('TRK-')
+      ? reservationCode.trim().toUpperCase()
+      : `TRK-${reservationCode.trim().toUpperCase()}`;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setErrorMessage('No authentication token found. Please log in again.');
         toast({
-          title: 'Verification Failed',
-          description: 'Invalid reservation code',
+          title: 'Unauthorized',
+          description: 'No authentication token found. Please log in again.',
           variant: 'destructive',
         });
+        setIsProcessing(false);
+        return;
       }
-      
-      setIsProcessing(false);
-    }, 1000);
+
+      // Always build the body with the current codeToCheck
+      const payload = {
+        tracking_code: codeToCheck,
+      };
+
+      // Debug: log payload before sending
+      console.log('Sending payload:', payload);
+
+      const res = await fetch('http://127.0.0.1:8000/api/staff/verify-trip', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        setErrorMessage('Unauthorized. Please log in again.');
+        toast({
+          title: 'Unauthorized',
+          description: 'You are not authorized. Please log in again.',
+          variant: 'destructive',
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          title: 'Verification Failed',
+          description: data?.message || 'Invalid code',
+          variant: 'destructive',
+        });
+        setErrorMessage(data?.message || 'Invalid code. Please check and try again.');
+      } else {
+        toast({
+          title: 'Verification Success',
+          description: typeof data === 'string' ? data : (data?.message || 'Trip verified successfully'),
+          variant: 'default',
+        });
+      }
+    } catch (error) {
+      setErrorMessage('Network error. Please try again.');
+      toast({
+        title: 'Verification Failed',
+        description: 'Network error',
+        variant: 'destructive',
+      });
+    }
+
+    setIsProcessing(false);
   };
   
   const handleStartRide = () => {
     toast({
-      title: 'Ride Started',
-      description: `${bikeDetails.userName} has started a ride on ${bikeDetails.model}`,
+      title: 'Trip Started',
+      description: `${bikeDetails.userName} has started a trip on ${bikeDetails.model}`,
       variant: 'default',
     });
     
     setBikeDetails(null);
     setReservationCode('');
   };
-  
-  const handleRandomBike = () => {
-    const randomBikeIndex = Math.floor(Math.random() * bikes.length);
-    const bike = bikes[randomBikeIndex];
-    const randomUserIndex = Math.floor(Math.random() * 3) + 3; // Users 3, 4, 5
-    const user = getUserById(randomUserIndex.toString());
-    
-    setBikeDetails({
-      id: bike.id,
-      model: bike.model,
-      category: bike.category,
-      status: bike.status,
-      userName: user?.name || 'Demo User',
-      userId: user?.id || 'demo-id',
-      reservation: {
-        id: `R${Math.floor(1000 + Math.random() * 9000)}`,
-        code: `${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        startTime: new Date().toISOString()
-      }
-    });
-    
-    toast({
-      title: 'Demo Mode',
-      description: 'Generated random bike details',
-      variant: 'default',
-    });
-  };
-  
-  const handleNavigateToReservations = () => {
-    navigate('/reservations');
-  };
-  
-  const handleNavigateToMaintenance = () => {
-    navigate('/maintenance-issues');
-  };
-  
-  const stationLocations: StationMapLocation[] = stations.map(station => ({
-    id: station.id,
-    name: station.name,
-    location: {
-      latitude: station.coordinates.lat,
-      longitude: station.coordinates.lng
+
+  const handleEndTrip = async () => {
+    if (!endTripCode.trim()) {
+      setEndTripError('Please enter a trip code');
+      return;
     }
-  }));
+
+    setIsEndingTrip(true);
+    setEndTripError('');
+
+    const codeToCheck = endTripCode.trim().toUpperCase().startsWith('TRK-')
+      ? endTripCode.trim().toUpperCase()
+      : `TRK-${endTripCode.trim().toUpperCase()}`;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setEndTripError('No authentication token found. Please log in again.');
+        toast({
+          title: 'Unauthorized',
+          description: 'No authentication token found. Please log in again.',
+          variant: 'destructive',
+        });
+        setIsEndingTrip(false);
+        return;
+      }
+
+      const payload = {
+        tracking_code: codeToCheck,
+      };
+
+      // Debug: log payload before sending
+      console.log('Sending end-trip payload:', payload);
+
+      const res = await fetch('http://127.0.0.1:8000/api/staff/end-trip', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        setEndTripError('Unauthorized. Please log in again.');
+        toast({
+          title: 'Unauthorized',
+          description: 'You are not authorized. Please log in again.',
+          variant: 'destructive',
+        });
+        setIsEndingTrip(false);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          title: 'End Trip Failed',
+          description: data?.message || 'Invalid code or trip not active',
+          variant: 'destructive',
+        });
+        setEndTripError(data?.message || 'Invalid code or trip not active. Please check and try again.');
+      } else {
+        const tripId = data?.trip?.id || data?.id;
+        toast({
+          title: 'Trip Ended Successfully',
+          description: `Trip ID: ${tripId} - ${typeof data === 'string' ? data : (data?.message || 'Trip ended successfully')}`,
+          variant: 'default',
+        });
+
+        // Poll payment status
+        if (tripId) {
+          let isPolling = true;
+          const checkPaymentStatus = async () => {
+            if (!isPolling) return;
+            try {
+              const response = await fetch(`http://127.0.0.1:8000/api/check_payment_status/${tripId}`, {
+                credentials: 'include',
+                headers: { 'Accept': 'application/json' },
+              });
+              if (response.ok) {
+                const paymentData = await response.json();
+                console.log('Payment status response:', paymentData);
+                
+                if (paymentData.status === 'completed') {
+                  isPolling = false;
+                  // Format the trip data for receipt
+                  const formattedTrip = {
+                    id: paymentData.summary?.price?.toString() || 'N/A',
+                    tracking_code: endTripCode,
+                    bike_number: paymentData.summary?.bike_number || 'N/A',
+                    user_name: paymentData.summary?.start_staff_name || 'N/A',
+                    start_time: paymentData.summary?.start_time,
+                    end_time: paymentData.summary?.end_time,
+                    duration: paymentData.summary?.duration,
+                    price: paymentData.summary?.price,
+                    status: 'completed',
+                    payment_type: paymentData.payment_type || 'N/A'
+                  };
+                  setCurrentTrip(formattedTrip);
+                  setShowReceipt(true);
+                  return;
+                } else if (paymentData.status === 'payment_pending') {
+                  // Continue polling if payment is pending
+                  if (isPolling) {
+                    setTimeout(checkPaymentStatus, 5000);
+                  }
+                  return;
+                } else if (paymentData.status === 'failed') {
+                  isPolling = false;
+                  toast({
+                    title: 'Payment Failed',
+                    description: 'Payment processing failed. Please try again.',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+              }
+              if (isPolling) {
+                setTimeout(checkPaymentStatus, 5000);
+              }
+            } catch (error) {
+              console.error('Error checking payment status:', error);
+              isPolling = false;
+              toast({
+                title: 'Error',
+                description: 'Failed to check payment status',
+                variant: 'destructive',
+              });
+            }
+          };
+          checkPaymentStatus();
+        }
+        setEndTripCode('');
+      }
+    } catch (error) {
+      setEndTripError('Network error. Please try again.');
+      toast({
+        title: 'End Trip Failed',
+        description: 'Network error',
+        variant: 'destructive',
+      });
+    }
+
+    setIsEndingTrip(false);
+  };
   
-  const selectedStationId = selectedStation.id;
+  // Defensive: only map stations with valid coordinates
+  // Add active bikes as map pins
+  const activeBikeLocations: StationMapLocation[] = bikes
+    .filter(bike => bike.status === 'in-use' && bike.latitude && bike.longitude)
+    .map(bike => ({
+      id: bike.id,
+      name: `Bike ${bike.id} (${bike.model})`,
+      location: {
+        latitude: bike.latitude,
+        longitude: bike.longitude,
+      }
+    }));
+
+  const stationLocations: StationMapLocation[] = stations
+    .filter(station => station.coordinates && typeof station.coordinates.lat === 'number' && typeof station.coordinates.lng === 'number')
+    .map(station => ({
+      id: station.id,
+      name: station.name,
+      location: {
+        latitude: station.coordinates.lat,
+        longitude: station.coordinates.lng
+      }
+    }));
+
+  // Combine stations and active bikes for the map
+  const mapLocations: StationMapLocation[] = [
+    ...stationLocations,
+    ...activeBikeLocations
+  ];
+
+  const selectedStationId = selectedStation?.id;
   
   const handleStationSelect = (stationId: string) => {
     const station = stations.find(s => s.id === stationId);
@@ -135,20 +400,23 @@ const StaffPanel = () => {
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Staff Control Panel</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Staff Control Panel</h1>
+        <div className="text-sm text-graydark">Today: {new Date().toLocaleDateString()}</div>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <BikeIcon className="mr-2" size={20} />
-            Reservation Verification
+            <BikeIcon className="mr-2 text-blueprimary" size={20} />
+            Start Trip
           </h2>
           
           {!bikeDetails ? (
             <div className="space-y-4">
               <div>
                 <label htmlFor="reservation-code" className="block text-sm font-medium mb-1 text-graydark dark:text-gray-300">
-                  Enter Reservation Code
+                  Enter Trip Code
                 </label>
                 <div className="flex gap-2">
                   <Input
@@ -162,22 +430,12 @@ const StaffPanel = () => {
                   <Button 
                     onClick={handleVerifyCode} 
                     disabled={isProcessing}
-                    className="whitespace-nowrap"
+                    className="whitespace-nowrap bg-greenprimary hover:bg-greenprimary/90"
                   >
                     {isProcessing ? 'Verifying...' : 'Verify Code'}
                   </Button>
                 </div>
                 {errorMessage && <p className="mt-2 text-sm text-error">{errorMessage}</p>}
-              </div>
-              
-              <div className="flex justify-center pt-4">
-                <Button 
-                  variant="outline"
-                  onClick={handleRandomBike}
-                  className="text-sm"
-                >
-                  Demo: Show Random Bike
-                </Button>
               </div>
             </div>
           ) : (
@@ -214,16 +472,18 @@ const StaffPanel = () => {
               </div>
               
               <div className="pt-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Reservation</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Trip Code</p>
                 <p className="font-medium">
-                  {bikeDetails.reservation.id} 
-                  {bikeDetails.reservation.code && ` (Code: ${bikeDetails.reservation.code})`}
+                  {bikeDetails.reservation.code}
                 </p>
               </div>
               
               <div className="pt-3">
-                <Button onClick={handleStartRide} className="w-full">
-                  Start Ride
+                <Button 
+                  onClick={handleStartRide} 
+                  className="w-full bg-tealsecondary hover:bg-tealsecondary/90"
+                >
+                  Start Trip
                 </Button>
               </div>
             </div>
@@ -231,36 +491,51 @@ const StaffPanel = () => {
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <BikeIcon className="mr-2 text-blueprimary" size={20} />
+            End Trip
+          </h2>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
-                 onClick={handleNavigateToReservations}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium">Reservations</h3>
-                <span className="bg-graydark text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                  {reservations.filter(r => r.status === 'active').length}
-                </span>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="end-trip-code" className="block text-sm font-medium mb-1 text-graydark dark:text-gray-300">
+                Enter Trip Code
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="end-trip-code"
+                  value={endTripCode}
+                  onChange={(e) => setEndTripCode(e.target.value.toUpperCase())}
+                  placeholder="Enter 6-digit code"
+                  className="uppercase"
+                  maxLength={6}
+                />
+                <Button 
+                  onClick={handleEndTrip} 
+                  disabled={isEndingTrip}
+                  className="whitespace-nowrap bg-greenprimary hover:bg-greenprimary/90"
+                >
+                  {isEndingTrip ? 'Processing...' : 'End Trip'}
+                </Button>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Manage active reservations</p>
+              {endTripError && <p className="mt-2 text-sm text-error">{endTripError}</p>}
             </div>
             
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
-                 onClick={handleNavigateToMaintenance}>
-              <h3 className="font-medium mb-2">Maintenance</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Report bike issues</p>
-            </div>
-            
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
-                 onClick={() => navigate('/active-rides')}>
-              <h3 className="font-medium mb-2">Active Rides</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Monitor ongoing rentals</p>
-            </div>
-            
-            <div className="bg-graylight p-4 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
-                 onClick={() => navigate('/available-bikes')}>
-              <h3 className="font-medium mb-2">Available Bikes</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Check bike availability</p>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="font-medium mb-2">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-graylight p-3 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
+                    onClick={() => navigate('/reservations')}>
+                  <h4 className="font-medium text-sm">Reservations</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">View all active reservations</p>
+                </div>
+                
+                <div className="bg-graylight p-3 rounded-lg hover:bg-graylight/80 cursor-pointer transition-colors dark:bg-gray-700 dark:hover:bg-gray-600"
+                    onClick={() => navigate('/active-rides')}>
+                  <h4 className="font-medium text-sm">Active Trips</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">View ongoing rides</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +548,7 @@ const StaffPanel = () => {
           <div className="flex items-center">
             <MapPin size={18} className="mr-1 text-graydark dark:text-gray-300" />
             <select
-              value={selectedStation.id}
+              value={selectedStation?.id}
               onChange={(e) => setSelectedStation(stations.find(s => s.id === e.target.value) || stations[0])}
               className="border rounded p-1 text-sm focus:outline-none focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
             >
@@ -287,15 +562,28 @@ const StaffPanel = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1 max-h-[300px] overflow-y-auto pr-2">
+          <div className="lg:col-span-2 h-[500px] bg-graylight rounded-lg overflow-hidden dark:bg-gray-700">
+            <StationMap 
+              stations={mapLocations} 
+              selectedStation={selectedStationId} 
+              onStationSelect={handleStationSelect} 
+            />
+          </div>
+
+          <div className="lg:col-span-1 max-h-[500px] overflow-y-auto pr-2">
             <div className="flex items-center gap-2 mb-3">
               <Search size={16} />
-              <Input placeholder="Search bikes..." className="text-sm" />
+              <Input 
+                placeholder="Search bikes..." 
+                className="text-sm" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             
-            {stationBikes.length > 0 ? (
+            {filteredBikes.length > 0 ? (
               <ul className="space-y-2">
-                {stationBikes.map((bike) => (
+                {filteredBikes.map((bike) => (
                   <li key={bike.id} className="p-3 bg-graylight rounded-md hover:bg-graylight/80 cursor-pointer dark:bg-gray-700 dark:hover:bg-gray-600">
                     <div className="flex items-center justify-between">
                       <div>
@@ -323,20 +611,24 @@ const StaffPanel = () => {
               </ul>
             ) : (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                No bikes at this station
+                No bikes found for your search
               </div>
             )}
           </div>
-          
-          <div className="lg:col-span-2 h-[300px] bg-graylight rounded-lg overflow-hidden dark:bg-gray-700">
-            <StationMap 
-              stations={stationLocations} 
-              selectedStation={selectedStationId} 
-              onStationSelect={handleStationSelect} 
-            />
-          </div>
         </div>
       </div>
+
+      {/* Add Receipt Dialog */}
+      <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
+        <DialogContent className="max-w-2xl">
+          {currentTrip && (
+            <TripReceiptStaff
+              trip={currentTrip}
+              onClose={() => setShowReceipt(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

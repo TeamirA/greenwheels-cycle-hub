@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -32,7 +31,7 @@ export function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const isAdmin = authState.role === 'admin';
+  const isAdmin = authState.role === 'superadmin';
   const isStaff = authState.role === 'staff';
   
   return (
@@ -47,55 +46,97 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup title="Navigation">
           {isAdmin && (
-            <SidebarItem 
-              icon={<LayoutDashboard size={18} />} 
-              title="Dashboard"
-              active={isActive('/admin-dashboard')}
-              href="/admin-dashboard"
-            >
-              Dashboard
-            </SidebarItem>
+            <>
+              <SidebarItem 
+                icon={<LayoutDashboard size={18} />} 
+                title="Admin Dashboard"
+                active={isActive('/admin-dashboard')}
+                href="/admin-dashboard"
+              >
+                Admin Dashboard
+              </SidebarItem>
+              <SidebarItem 
+                icon={<Users size={18} />} 
+                title="All Users"
+                active={isActive('/superadmin/users')}
+                href="/superadmin/users"
+              >
+                All Users
+              </SidebarItem>
+              <SidebarItem 
+                icon={<UserCheck size={18} />} 
+                title="User Management"
+                active={isActive('/user-management')}
+                href="/user-management"
+              >
+                User Management
+              </SidebarItem>
+              <SidebarItem 
+                icon={<Bike size={18} />} 
+                title="Bike Fleet"
+                active={isActive('/bike-fleet')}
+                href="/bike-fleet"
+              >
+                Bike Fleet
+              </SidebarItem>
+              <SidebarItem 
+                icon={<MapPin size={18} />} 
+                title="Station Management"
+                active={isActive('/station-management')}
+                href="/station-management"
+              >
+                Station Management
+              </SidebarItem>
+              <SidebarItem 
+                icon={<LayoutDashboard size={18} />} 
+                title="Active Rides"
+                active={isActive('/active-rides')}
+                href="/active-rides"
+              >
+                Active Rides
+              </SidebarItem>
+              <SidebarItem 
+                icon={<Search size={18} />} 
+                title="Available Bikes"
+                active={isActive('/available-bikes')}
+                href="/available-bikes"
+              >
+                Available Bikes
+              </SidebarItem>
+              <SidebarItem 
+                icon={<BarChart2 size={18} />} 
+                title="Reports"
+                active={isActive('/reports')}
+                href="/reports"
+              >
+                Reports
+              </SidebarItem>
+              <SidebarItem 
+                icon={<UserCheck size={18} />} 
+                title="Register User"
+                active={isActive('/register-user')}
+                href="/register-user"
+              >
+                Register User
+              </SidebarItem>
+              <SidebarItem 
+                icon={<Bike size={18} />} 
+                title="Register Bike"
+                active={isActive('/register-bike')}
+                href="/register-bike"
+              >
+                Register Bike
+              </SidebarItem>
+              <SidebarItem 
+                icon={<MapPin size={18} />} 
+                title="Create Station"
+                active={isActive('/create-station')}
+                href="/create-station"
+              >
+                Create Station
+              </SidebarItem>
+            </>
           )}
-          
-          {isStaff && (
-            <SidebarItem 
-              icon={<LayoutDashboard size={18} />} 
-              title="Dashboard"
-              active={isActive('/staff-panel')}
-              href="/staff-panel"
-            >
-              Dashboard
-            </SidebarItem>
-          )}
-          
-          {(!isAdmin && !isStaff) && (
-            <SidebarItem 
-              icon={<Bike size={18} />} 
-              title="Home"
-              active={location.pathname === '/'}
-              href="/"
-            >
-              Home
-            </SidebarItem>
-          )}
-          
-          <SidebarItem 
-            icon={<Calendar size={18} />} 
-            title="My Rides"
-            active={isActive('/my-rides')}
-            href="/my-rides"
-          >
-            My Rides
-          </SidebarItem>
-          
-          <SidebarItem 
-            icon={<MapPin size={18} />} 
-            title="Stations"
-            active={isActive('/stations')}
-            href="/stations"
-          >
-            Stations
-          </SidebarItem>
         </SidebarGroup>
         
         {(isAdmin || isStaff) && (

@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
@@ -8,10 +7,14 @@ const Unauthorized = () => {
   const { authState } = useAuth();
 
   let redirectPath = '/';
-  if (authState.role === 'admin') {
-    redirectPath = '/admin-dashboard';
+  if (authState.role === 'superadmin') {
+    redirectPath = '/admin-dashboard'; // Redirect for superadmin
+  } else if (authState.role === 'admin') {
+    redirectPath = '/station-admin-dashboard'; // Redirect for admin
   } else if (authState.role === 'staff') {
-    redirectPath = '/staff-panel';
+    redirectPath = '/staff-panel'; // Redirect for staff
+  } else if (authState.role === 'maintenance') {
+    redirectPath = '/maintenance-dashboard'; // Redirect for maintenance
   }
 
   return (

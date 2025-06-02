@@ -1,70 +1,188 @@
-
 import { useEffect, useState } from 'react';
 import { Bike, MapPin, Users, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardCard from '@/components/ui/dashboard-card';
 import BikeStatusBadge from '@/components/ui/bike-status-badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { bikes, users, stations, maintenanceReports, getBikeSummary, getStationSummary, getMaintenanceSummary } from '@/data/mockData';
-import { Bike as BikeType, MaintenanceReport } from '@/types';
+import { bikes, mockUsers, stations, getBikeSummary, getStationSummary, getMaintenanceSummary, getActiveBikes } from '@/data/mockData';
+import { Bike as BikeType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { MaintenanceReport } from '@/types';
 
 const AdminDashboard = () => {
   const { authState } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [bikeSummary, setBikeSummary] = useState(getBikeSummary());
+  const [bikeSummary, setBikeSummary] = useState({
+    totalBikes: 0,
+    availableBikes: 0,
+    inUseBikes: 0,
+    totalRevenue: 0,
+    todayRevenue: 0,
+    activeTrips: 0,
+    reservedBikes: 0
+  });
   const [stationSummary, setStationSummary] = useState(getStationSummary());
   const [maintenanceSummary, setMaintenanceSummary] = useState(getMaintenanceSummary());
-  const [bikeList, setBikeList] = useState<BikeType[]>(bikes);
-  const [filteredBikes, setFilteredBikes] = useState<BikeType[]>(bikes);
+  
+  // Limit the bike list to 100 bikes
+  const reducedBikes = bikes.slice(0, 100);
+  const [bikeList, setBikeList] = useState<BikeType[]>(reducedBikes);
+  const [filteredBikes, setFilteredBikes] = useState<BikeType[]>(reducedBikes);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(false);
-  const [recentReports, setRecentReports] = useState<MaintenanceReport[]>(
-    maintenanceReports.slice(0, 5)
-  );
+  const [recentReports, setRecentReports] = useState<MaintenanceReport[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
 
-  const bikesPerPage = 5;
+  const itemsPerPage = 10;
 
-  // Simulate data refresh at intervals
+  // Fetch maintenance reports
   useEffect(() => {
-    const refreshData = () => {
-      setLoading(true);
-      
-      setTimeout(() => {
-        // Simulate random changes to the data
-        const updatedBikeSummary = {
-          ...bikeSummary,
-          availableBikes: bikeSummary.availableBikes + Math.floor(Math.random() * 3) - 1,
-          inUseBikes: bikeSummary.inUseBikes + Math.floor(Math.random() * 3) - 1,
-        };
-        
-        setBikeSummary(updatedBikeSummary);
-        setLoading(false);
-        
-        toast({
-          title: 'Dashboard Updated',
-          description: 'Live data has been refreshed',
-          variant: 'default',
+    const fetchMaintenanceReports = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching maintenance reports...');
+        const response = await fetch('http://127.0.0.1:8000/api/bike/maintenance', {
+          headers: {
+            'Authorization': `Bearer ${authState.token}`,
+            'Accept': 'application/json',
+          },
         });
-      }, 1000);
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Raw maintenance data:', data);
+
+        // Transform the API response to match our MaintenanceReport type
+        const reports = Array.isArray(data) ? data : data.reports || data.data || [];
+        console.log('Extracted reports:', reports);
+
+        const transformedReports = reports.map((report: any) => {
+          console.log('Processing report:', report);
+          return {
+            id: report.id?.toString() || Math.random().toString(),
+            bikeId: report.bike_id || report.bikeId || 'Unknown Bike',
+            stationId: report.station_id || report.stationId,
+            stationName: report.station_name || report.stationName || 'Unknown Station',
+            issue: report.issue || report.description || 'No issue description',
+            priority: report.priority || 'medium',
+            status: report.status || 'pending',
+            reportedAt: report.reported_at || report.reportedAt || new Date().toISOString(),
+            resolvedAt: report.resolved_at || report.resolvedAt,
+            notes: report.notes || '',
+            bike_number: report.bike_number || '',
+            reason: report.reason || '',
+            description: report.description || '',
+            reported_by: report.reported_by || '',
+            phone_number: report.phone_number || '',
+            maintenance_status: report.maintenance_status || 'pending',
+            role: report.role || 'staff'
+          };
+        });
+
+        console.log('Transformed reports:', transformedReports);
+
+        // Sort by priority first (high to low), then by reported date (most recent first)
+        transformedReports.sort((a: MaintenanceReport, b: MaintenanceReport) => {
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 1) - 
+                             (priorityOrder[b.priority as keyof typeof priorityOrder] || 1);
+          
+          if (priorityDiff !== 0) return priorityDiff;
+          
+          return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
+        });
+
+        console.log('Sorted reports:', transformedReports);
+        setRecentReports(transformedReports);
+      } catch (error) {
+        console.error('Error fetching maintenance reports:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load maintenance reports',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    // Set an interval to refresh data every 5 minutes (300000ms)
-    // For demo purposes, we'll use a shorter interval
-    const intervalId = setInterval(refreshData, 300000);
-    
-    // Clean up interval on component unmount
+
+    // Initial fetch
+    fetchMaintenanceReports();
+
+    // Set up interval for live updates every 30 seconds
+    const intervalId = setInterval(fetchMaintenanceReports, 30000);
+
+    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
-  }, [bikeSummary, toast]);
+  }, [authState.token, toast]);
+
+  // Fetch bike summary data
+  useEffect(() => {
+    const fetchBikeSummary = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching bike summary...');
+        const response = await fetch('http://127.0.0.1:8000/api/superadmin/revenue/bike-summary', {
+          headers: {
+            'Authorization': `Bearer ${authState.token}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        console.log('Bike summary response status:', response.status);
+        const data = await response.json();
+        console.log('Bike summary data:', data);
+
+        if (response.ok) {
+          // Get active bikes from both API and mock data
+          const activeBikes = getActiveBikes();
+          const apiActiveBikes = data.active_bikes || 0;
+          console.log('Active bikes from mock:', activeBikes.length);
+          console.log('Active bikes from API:', apiActiveBikes);
+
+          setBikeSummary({
+            totalBikes: data.total_bikes || 0,
+            availableBikes: data.available_bikes || 0,
+            inUseBikes: apiActiveBikes || activeBikes.length || 0,
+            totalRevenue: data.total_revenue || 0,
+            todayRevenue: data.today_revenue || 0,
+            activeTrips: apiActiveBikes || activeBikes.length || 0,
+            reservedBikes: data.reserved_bikes || 0
+          });
+        } else {
+          throw new Error(data.message || 'Failed to fetch bike summary');
+        }
+      } catch (error) {
+        console.error('Error fetching bike summary:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load bike summary data',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Initial fetch
+    fetchBikeSummary();
+
+    // Set up interval for live updates every 30 seconds
+    const intervalId = setInterval(fetchBikeSummary, 30000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [authState.token, toast]);
 
   // Filter bikes based on search and status filter
   useEffect(() => {
-    let results = bikes;
+    let results = reducedBikes;
     
     // Apply status filter
     if (statusFilter !== 'all') {
@@ -86,10 +204,87 @@ const AdminDashboard = () => {
   }, [searchTerm, statusFilter]);
 
   // Paginate bikes
-  const indexOfLastBike = currentPage * bikesPerPage;
-  const indexOfFirstBike = indexOfLastBike - bikesPerPage;
+  const indexOfLastBike = currentPage * itemsPerPage;
+  const indexOfFirstBike = indexOfLastBike - itemsPerPage;
   const currentBikes = filteredBikes.slice(indexOfFirstBike, indexOfLastBike);
-  const totalPages = Math.ceil(filteredBikes.length / bikesPerPage);
+  const totalPages = Math.ceil(filteredBikes.length / itemsPerPage);
+
+  // Fetch reservations
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching reservations...');
+        const response = await fetch('http://127.0.0.1:8000/api/bike/reserved', {
+          headers: {
+            'Authorization': `Bearer ${authState.token}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Raw reservations data:', data);
+
+        const reservationsData = Array.isArray(data) ? data : data.reservations || data.data || [];
+        console.log('Processed reservations:', reservationsData);
+
+        setReservations(reservationsData);
+        setFilteredReservations(reservationsData);
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load reservations',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Initial fetch
+    fetchReservations();
+
+    // Set up interval for live updates every 30 seconds
+    const intervalId = setInterval(fetchReservations, 30000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [authState.token, toast]);
+
+  // Filter reservations based on search and status
+  useEffect(() => {
+    let results = reservations;
+    
+    if (statusFilter !== 'all') {
+      results = results.filter(reservation => reservation.status === statusFilter);
+    }
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      results = results.filter(reservation => 
+        reservation.bike_id?.toLowerCase().includes(term) ||
+        reservation.user_id?.toLowerCase().includes(term) ||
+        reservation.station_id?.toLowerCase().includes(term)
+      );
+    }
+    
+    setFilteredReservations(results);
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, reservations]);
+
+  // Paginate reservations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredReservations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPagesReservations = Math.ceil(filteredReservations.length / itemsPerPage);
+
+  // Paginate maintenance issues
+  const indexOfLastReport = currentPage * itemsPerPage;
+  const indexOfFirstReport = indexOfLastReport - itemsPerPage;
+  const currentReports = recentReports.slice(indexOfFirstReport, indexOfLastReport);
+  const totalPagesReports = Math.ceil(recentReports.length / itemsPerPage);
 
   // Handle page change
   const handlePageChange = (pageNumber: number) => {
@@ -110,6 +305,9 @@ const AdminDashboard = () => {
         break;
       case 'stations':
         navigate('/station-management');
+        break;
+      case 'reservedBikes':
+        navigate('/reserved-bikes');
         break;
       default:
         break;
@@ -134,27 +332,10 @@ const AdminDashboard = () => {
             Welcome back, {authState.user?.name}!
           </p>
         </div>
-        <div className="mt-4 md:mt-0">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setLoading(true);
-              setTimeout(() => {
-                setBikeSummary(getBikeSummary());
-                setStationSummary(getStationSummary());
-                setMaintenanceSummary(getMaintenanceSummary());
-                setLoading(false);
-              }, 1000);
-            }}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh Data'}
-          </Button>
-        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div onClick={() => handleCardClick('allBikes')} className="cursor-pointer hover:scale-105 transition-transform">
           <DashboardCard 
             title="Total Bikes" 
@@ -166,9 +347,9 @@ const AdminDashboard = () => {
         </div>
         <div onClick={() => handleCardClick('inUseBikes')} className="cursor-pointer hover:scale-105 transition-transform">
           <DashboardCard 
-            title="Bikes in Use" 
-            value={bikeSummary.inUseBikes}
-            trend={`${Math.round((bikeSummary.inUseBikes / bikeSummary.totalBikes) * 100)}% of fleet`}
+            title="Active Trips" 
+            value={bikeSummary.activeTrips}
+            trend={`${bikeSummary.inUseBikes} bikes in use`}
             icon={<Bike size={24} className="text-greenaccent" />}
             color="var(--greenaccent)"
             loading={loading}
@@ -178,31 +359,42 @@ const AdminDashboard = () => {
           <DashboardCard 
             title="Available Bikes" 
             value={bikeSummary.availableBikes}
+            trend={`${Math.round((bikeSummary.availableBikes / bikeSummary.totalBikes) * 100)}% of fleet`}
             icon={<Bike size={24} className="text-greenprimary" />}
             color="var(--greenprimary)"
             loading={loading}
           />
         </div>
-        <div onClick={() => handleCardClick('stations')} className="cursor-pointer hover:scale-105 transition-transform">
+        <div onClick={() => handleCardClick('reservedBikes')} className="cursor-pointer hover:scale-105 transition-transform">
           <DashboardCard 
-            title="Docking Stations" 
-            value={stationSummary.totalStations}
-            trend={`${stationSummary.utilization}% capacity utilization`}
-            icon={<MapPin size={24} className="text-graydark" />}
+            title="Reserved Bikes" 
+            value={bikeSummary.reservedBikes}
+            trend={`${Math.round((bikeSummary.reservedBikes / bikeSummary.totalBikes) * 100)}% of fleet`}
+            icon={<Bike size={24} className="text-blue-500" />}
+            color="var(--blue-500)"
+            loading={loading}
+          />
+        </div>
+        <div className="cursor-pointer hover:scale-105 transition-transform">
+          <DashboardCard 
+            title="Today's Revenue" 
+            value={`ETB ${bikeSummary.todayRevenue.toFixed(2)}`}
+            trend={`Total: ETB ${bikeSummary.totalRevenue.toFixed(2)}`}
+            icon={<FileText size={24} className="text-graydark" />}
             color="var(--graydark)"
             loading={loading}
           />
         </div>
       </div>
 
-      {/* Bike Inventory Table */}
+      {/* Replace Bike Inventory Table with Reservations Table */}
       <div className="bg-white rounded-lg shadow p-6 animate-fade-in">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <h2 className="text-xl font-semibold text-graydark">Bike Inventory</h2>
+          <h2 className="text-xl font-semibold text-graydark">Active Reservations</h2>
           <div className="mt-3 md:mt-0 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <Input
               type="text"
-              placeholder="Search bikes..."
+              placeholder="Search reservations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full sm:w-48 text-graydark"
@@ -213,9 +405,9 @@ const AdminDashboard = () => {
               className="px-3 py-2 rounded-md border border-input bg-background text-graydark"
             >
               <option value="all">All Statuses</option>
-              <option value="available">Available</option>
-              <option value="in-use">In Use</option>
-              <option value="maintenance">Maintenance</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -225,79 +417,91 @@ const AdminDashboard = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                  Reservation ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
                   Bike ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Model
+                  User ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                  Start Time
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Battery
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Last Maintenance
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentBikes.map((bike) => (
-                <tr key={bike.id} className="hover:bg-gray-50">
+              {currentItems.map((reservation) => (
+                <tr key={reservation.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-graydark">
-                    {bike.id}
+                    {reservation.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {bike.model}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <BikeStatusBadge status={bike.status} pulseOnUpdate={loading} />
+                    {reservation.bike_id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {bike.batteryPercentage ? `${bike.batteryPercentage}%` : 'N/A'}
+                    {reservation.user_id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {new Date(bike.lastMaintenance).toLocaleDateString()}
+                    {new Date(reservation.start_time).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                      ${reservation.status === 'active' ? 'bg-green-100 text-green-800' : 
+                        reservation.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
+                        'bg-red-100 text-red-800'}`}
+                    >
+                      {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                    </span>
                   </td>
                 </tr>
               ))}
+              {currentItems.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No reservations found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination for reservations */}
+        {totalPagesReservations > 1 && (
           <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-graydark">
-              Showing {indexOfFirstBike + 1} to {Math.min(indexOfLastBike, filteredBikes.length)} of {filteredBikes.length} bikes
+              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredReservations.length)} of {filteredReservations.length} reservations
             </div>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
               >
-                Previous
+                &#8592;
               </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              {Array.from({ length: totalPagesReservations }, (_, i) => i + 1).map((pageNumber) => (
                 <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => handlePageChange(page)}
-                  className={currentPage === page ? "bg-greenprimary hover:bg-greenprimary/80" : ""}
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={currentPage === pageNumber ? 'bg-greenprimary text-white' : 'bg-white text-graydark'}
                 >
-                  {page}
+                  {pageNumber}
                 </Button>
               ))}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPagesReservations))}
+                disabled={currentPage === totalPagesReservations}
               >
-                Next
+                &#8594;
               </Button>
             </div>
           </div>
@@ -308,30 +512,22 @@ const AdminDashboard = () => {
       <div className="bg-white rounded-lg shadow p-6 animate-fade-in">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-graydark">Recent Maintenance Issues</h2>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExportCSV}
-          >
-            Export to CSV
-          </Button>
         </div>
-
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Date
+                  Bike Number
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Bike ID
+                  Reported By
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
+                  Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
                   Issue
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
-                  Priority
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-graydark uppercase tracking-wider">
                   Status
@@ -339,40 +535,83 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {recentReports.map((report) => (
+              {currentReports.map((report) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {new Date(report.reportedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-graydark">
-                    {report.bikeId}
+                    {report.bike_number || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    {report.issue}
+                    <div>{report.reported_by || 'N/A'}</div>
+                    <div className="text-xs text-gray-500">{report.role || 'staff'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                      ${report.priority === 'high' ? 'bg-error/20 text-error' : 
-                        report.priority === 'medium' ? 'bg-greenaccent/30 text-graydark' : 
-                        'bg-gray-100 text-gray-500'}`}
-                    >
-                      {report.priority.charAt(0).toUpperCase() + report.priority.slice(1)}
-                    </span>
+                    {report.phone_number || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-graydark">
+                    <div className="font-medium">{report.reason || 'No reason provided'}</div>
+                    <div className="text-xs text-gray-500 mt-1">{report.description || 'No description'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-graydark">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                      ${report.status === 'pending' ? 'bg-gray-100 text-gray-600' : 
-                        report.status === 'in-progress' ? 'bg-greenaccent/30 text-graydark' : 
-                        'bg-greenprimary/20 text-greenprimary'}`}
+                      ${report.maintenance_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                        report.maintenance_status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
+                        'bg-green-100 text-green-800'}`}
                     >
-                      {report.status.charAt(0).toUpperCase() + report.status.slice(1).replace('-', ' ')}
+                      {report.maintenance_status.charAt(0).toUpperCase() + report.maintenance_status.slice(1).replace('_', ' ')}
                     </span>
                   </td>
                 </tr>
               ))}
+              {currentReports.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No maintenance issues found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+        {/* Pagination for maintenance issues */}
+        {totalPagesReports > 1 && (
+          <div className="flex justify-between items-center mt-4">
+            <div className="text-sm text-graydark">
+              Showing {indexOfFirstReport + 1} to {Math.min(indexOfLastReport, recentReports.length)} of {recentReports.length} issues
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                &#8592;
+              </Button>
+              {Array.from({ length: totalPagesReports }, (_, i) => {
+                const pageNumber = i + 1;
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className={currentPage === pageNumber ? 'bg-greenprimary text-white' : 'bg-white text-graydark'}
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPagesReports))}
+                disabled={currentPage === totalPagesReports}
+              >
+                &#8594;
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

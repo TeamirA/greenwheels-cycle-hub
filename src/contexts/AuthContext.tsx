@@ -1,23 +1,33 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, UserRole, AuthState } from '@/types';
-import { users } from '@/data/mockData';
+import axios from 'axios'; // Add axios for API calls
+import { User, UserRole } from '@/types'; // Remove AuthState import to avoid conflict
+
+export interface AuthState {
+  user: User | null;
+  role: UserRole | ''; // Allow empty string or valid UserRole
+  token: string;
+  isAuthenticated: boolean; // Add this property to track authentication status
+}
 
 interface AuthContextProps {
   authState: AuthState;
-  login: (email: string, password: string) => Promise<boolean>;
+  setAuthState: (state: AuthState) => void;
+  login: (ep: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthorized: (roles?: UserRole[]) => boolean;
 }
 
+// Update the default state to include isAuthenticated
 const defaultAuthState: AuthState = {
   user: null,
-  isAuthenticated: false,
-  role: null,
+  role: '', // Initialize as an empty string
+  token: '', // Initialize token as an empty string
+  isAuthenticated: false, // Initialize as false
 };
 
 const AuthContext = createContext<AuthContextProps>({
   authState: defaultAuthState,
+  setAuthState: () => {},
   login: async () => false,
   logout: () => {},
   isAuthorized: () => false,
@@ -27,113 +37,109 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>(() => {
-    // Check for existing auth state in localStorage
-    const savedAuth = localStorage.getItem('auth');
-    if (savedAuth) {
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
       try {
-        return JSON.parse(savedAuth);
-      } catch (error) {
-        console.error('Error parsing auth from localStorage:', error);
-        return defaultAuthState;
+        const parsedAuth = JSON.parse(storedAuth);
+        return {
+          ...defaultAuthState,
+          ...parsedAuth,
+          isAuthenticated: !!parsedAuth.token, // Ensure isAuthenticated is set correctly
+        };
+      } catch {
+        console.error('Failed to parse auth state from localStorage');
       }
     }
     return defaultAuthState;
   });
 
-  // Save auth state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('auth', JSON.stringify(authState));
   }, [authState]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // For demo: check credentials for predefined roles
-    if (email === 'admin@gmail.com' && password === 'password') {
-      setAuthState({
-        user: {
-          id: 'admin-user',
-          name: 'Admin User',
-          email: email,
-          role: 'admin',
-          verified: true,
-          createdAt: new Date().toISOString()
-        },
-        isAuthenticated: true,
-        role: 'admin',
-      });
-      return true;
-    } else if (email === 'staff@gmail.com' && password === 'password') {
-      setAuthState({
-        user: {
-          id: 'staff-user',
-          name: 'Staff User',
-          email: email,
-          role: 'staff',
-          verified: true,
-          createdAt: new Date().toISOString(),
-          stationId: 'station-1'
-        },
-        isAuthenticated: true,
-        role: 'staff',
-      });
-      return true;
-    } else if (email === 'maintenance@gmail.com' && password === 'password') {
-      setAuthState({
-        user: {
-          id: 'maintenance-user',
-          name: 'Maintenance Team User',
-          email: email,
-          role: 'maintenance',
-          verified: true,
-          createdAt: new Date().toISOString(),
-          stationId: 'station-1'
-        },
-        isAuthenticated: true,
-        role: 'maintenance',
-      });
-      return true;
-    } else if (email === 'stationAdmin@gmail.com' && password === 'password') {
-      setAuthState({
-        user: {
-          id: 'station-admin-user',
-          name: 'Station Admin User',
-          email: email,
-          role: 'station-admin',
-          verified: true,
-          createdAt: new Date().toISOString(),
-          stationId: 'station-1'
-        },
-        isAuthenticated: true,
-        role: 'station-admin',
-      });
-      return true;
-    } else {
-      // Check mock users as fallback
-      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-      if (user && password === 'password') {
-        setAuthState({
-          user,
+  const login = async (ep: string, password: string): Promise<boolean> => {
+    try {
+      console.log('Attempting login...');
+      // Send login request to the backend
+      const response = await axios.post('http://127.0.0.1:8000/api/login', { ep, password }, { withCredentials: true });
+      console.log('Login response:', response.data);
+
+      // Destructure the response to get role and token
+      const { role, token, message, user } = response.data;
+
+      if (role && token) {
+        console.log('Login successful, setting auth state with user:', user);
+        
+        // Create a complete user object that matches the User type
+        const userData: User = {
+          id: user?.id || ep,
+          email: ep,
+          role: role as UserRole,
+          name: user?.name || 'Admin User',
+          verified: user?.verified || true,
+          createdAt: user?.createdAt || new Date().toISOString(),
+          national_id: user?.national_id || '',
+          join_date: user?.join_date || new Date().toISOString(),
+          stationId: user?.station_id || user?.stationId || undefined,
+          station_name: user?.station_name || undefined,
+          phone: user?.phone || 'N/A',
+          status: user?.status || 'pending'
+        };
+
+        const newAuthState: AuthState = {
+          user: userData,
+          role: role as UserRole,
+          token,
           isAuthenticated: true,
-          role: user.role,
-        });
+        };
+
+        console.log('Setting new auth state:', newAuthState);
+        setAuthState(newAuthState);
+
+        // Save the token and user to localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('auth', JSON.stringify(newAuthState));
+
+        // Set axios default header for future requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        console.log('Login complete, auth state saved');
         return true;
+      } else {
+        console.error('Login response missing required data:', { role, token, user });
+        return false;
       }
+    } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message);
+      // 401 Unauthorized means invalid credentials
+      if (error.response && error.response.status === 401) {
+        console.error('Login failed: Unauthorized (401)');
+      } else {
+        console.error('Login failed:', error);
+      }
+      return false;
     }
-    
-    return false;
   };
 
   const logout = () => {
-    setAuthState(defaultAuthState);
+    setAuthState({
+      user: null,
+      role: '', // Clear role during logout
+      token: '', // Clear token during logout
+      isAuthenticated: false, // Set to false on logout
+    });
+    localStorage.removeItem('auth');
+    localStorage.removeItem('token');
   };
 
   const isAuthorized = (roles?: UserRole[]): boolean => {
-    if (!authState.isAuthenticated) return false;
+    if (!authState.token) return false; // Check if token exists
     if (!roles || roles.length === 0) return true;
     return !!authState.role && roles.includes(authState.role);
   };
 
   return (
-    <AuthContext.Provider value={{ authState, login, logout, isAuthorized }}>
+    <AuthContext.Provider value={{ authState, setAuthState, login, logout, isAuthorized }}>
       {children}
     </AuthContext.Provider>
   );

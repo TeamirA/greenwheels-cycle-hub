@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Plus, Clock, CheckCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { maintenanceReports, bikes, users, commonIssues } from '@/data/mockData';
+import { maintenanceReports, bikes, mockUsers, commonIssues } from '@/data/mockData';
 import { MaintenanceReport, CommonIssue, Bike } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { CustomPagination } from '@/components/ui/custom-pagination';
@@ -19,7 +18,7 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
   const [showForm, setShowForm] = useState(false);
   const [selectedBike, setSelectedBike] = useState('');
   const [selectedIssue, setSelectedIssue] = useState('');
-  const [description, setDescription] = useState('');
+  const [issue_description, setIssue_description] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -29,13 +28,6 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
   // Initialize reports based on source
   useEffect(() => {
     let initialReports = maintenanceReports;
-
-    if (reportSource === 'user') {
-      initialReports = maintenanceReports.filter(report => report.userId);
-    } else if (reportSource === 'staff') {
-      initialReports = maintenanceReports.filter(report => report.staffId);
-    }
-
     setReports(initialReports);
     setFilteredReports(initialReports);
   }, [reportSource]);
@@ -43,26 +35,21 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
   // Filter reports
   useEffect(() => {
     let results = [...reports];
-
     if (statusFilter !== 'all') {
       results = results.filter(report => report.status === statusFilter);
     }
-
     if (priorityFilter !== 'all') {
       results = results.filter(report => report.priority === priorityFilter);
     }
-
     if (searchTerm) {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       results = results.filter(report =>
         report.bikeId.toLowerCase().includes(lowercasedSearchTerm) ||
-        report.issue.toLowerCase().includes(lowercasedSearchTerm) ||
-        report.description.toLowerCase().includes(lowercasedSearchTerm)
+        report.issue.toLowerCase().includes(lowercasedSearchTerm)
       );
     }
-
     setFilteredReports(results);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   }, [reports, searchTerm, statusFilter, priorityFilter]);
 
   const indexOfLastReport = currentPage * itemsPerPage;
@@ -82,7 +69,7 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
   };
 
   const handleSubmitReport = () => {
-    if (!selectedBike || !selectedIssue || !description) {
+    if (!selectedBike || !selectedIssue || !issue_description) {
       toast({
         title: 'Error',
         description: 'Please fill in all fields.',
@@ -100,7 +87,7 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
     setShowForm(false);
     setSelectedBike('');
     setSelectedIssue('');
-    setDescription('');
+    setIssue_description('');
   };
 
   return (
@@ -191,8 +178,6 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {currentReports.map(report => {
-                const reportUser = report.userId ? users.find(u => u.id === report.userId) : null;
-                const reportStaff = report.staffId ? users.find(u => u.id === report.staffId) : null;
                 const reportBike = bikes.find(b => b.id === report.bikeId);
                 
                 return (
@@ -216,17 +201,13 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
                     <CardContent className="p-4 space-y-4">
                       <div>
                         <h3 className="font-medium">{report.issue}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{report.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{report.issue}</p>
                       </div>
                       
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500 dark:text-gray-400">Bike ID:</span>
                           <span className="font-medium">{report.bikeId}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-500 dark:text-gray-400">Reported by:</span>
-                          <span className="font-medium">{reportUser?.name || reportStaff?.name || 'Unknown'}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500 dark:text-gray-400">Date:</span>
@@ -345,8 +326,8 @@ const StaffMaintenanceDashboard = ({ reportSource = 'staff' }: { reportSource?: 
             <Input
               id="description"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-gray-900 dark:text-gray-100 dark:bg-gray-800"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={issue_description}
+              onChange={(e) => setIssue_description(e.target.value)}
             />
           </div>
           <div className="flex justify-end">

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -35,22 +34,50 @@ const CreateStation = () => {
   });
   
   const onSubmit = (data: StationFormData) => {
-    setStationToConfirm(data);
+    const updatedData = {
+      ...data,
+      total_capacity: data.capacity, // Map capacity to total_capacity
+    };
+    setStationToConfirm(updatedData);
     setShowConfirmation(true);
   };
   
-  const confirmCreate = () => {
+  const confirmCreate = async () => {
     if (!stationToConfirm) return;
-    
-    // In a real application, this would make an API call
-    toast({
-      title: 'Station Created',
-      description: `${stationToConfirm.name} has been added to the system`,
-    });
-    
-    setShowConfirmation(false);
-    setStationToConfirm(null);
-    reset();
+
+    try {
+      // Make an API call to create the station
+      const response = await fetch('http://127.0.0.1:8000/api/superadmin/add_stations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(stationToConfirm),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create station');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: 'Station Created',
+        description: `${data.station.name} has been added to the system at ${data.station.location}`,
+      });
+
+      setShowConfirmation(false);
+      setStationToConfirm(null);
+      reset();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create station. Please try again.',
+        variant: 'destructive',
+      });
+      console.error('Error creating station:', error);
+    }
   };
   
   return (

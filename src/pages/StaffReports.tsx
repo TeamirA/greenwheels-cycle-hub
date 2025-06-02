@@ -2,7 +2,7 @@
 import StaffMaintenanceDashboard from '@/pages/StaffMaintenanceDashboard';
 
 const StaffReports = () => {
-  return <StaffMaintenanceDashboard />;
+  return <StaffMaintenanceDashboard reportSource="staff"  />;
 };
 
 export default StaffReports;
