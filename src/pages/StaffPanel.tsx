@@ -33,6 +33,8 @@ const StaffPanel = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [currentTrip, setCurrentTrip] = useState<any>(null);
+  const [cashPaymentInfo, setCashPaymentInfo] = useState<any>(null);
+  const [isConfirmingCash, setIsConfirmingCash] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/stations`, {
@@ -330,7 +332,26 @@ const StaffPanel = () => {
                   setShowReceipt(true);
                   return;
                 } else if (paymentData.status === 'payment_pending') {
-                  // Continue polling if payment is pending
+                  // A cash payment needs staff confirmation and will never
+                  // move to 'completed' on its own — stop polling and surface
+                  // the confirm action instead of waiting forever.
+                  try {
+                    const cashRes = await fetch(`${API_BASE_URL}/api/staff/trip/${tripId}/cash-payment-summary`, {
+                      credentials: 'include',
+                      headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+                    });
+                    if (cashRes.ok) {
+                      const cashData = await cashRes.json();
+                      if (cashData.payment_method === 'cash' && cashData.status !== 'success') {
+                        isPolling = false;
+                        setCashPaymentInfo(cashData);
+                        return;
+                      }
+                    }
+                  } catch (lookupError) {
+                    console.error('Error checking cash payment summary:', lookupError);
+                  }
+                  // Not a cash payment (or lookup failed) - keep polling as before.
                   if (isPolling) {
                     setTimeout(checkPaymentStatus, 5000);
                   }
@@ -373,7 +394,64 @@ const StaffPanel = () => {
 
     setIsEndingTrip(false);
   };
-  
+
+  const handleConfirmCashPayment = async () => {
+    if (!cashPaymentInfo) return;
+    setIsConfirmingCash(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/staff/confirmCashPaymentByTripId/${cashPaymentInfo.trip_id}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({
+          title: 'Confirmation Failed',
+          description: data?.message || 'Could not confirm cash payment',
+          variant: 'destructive',
+        });
+        setIsConfirmingCash(false);
+        return;
+      }
+
+      const formattedTrip = {
+        id: cashPaymentInfo.trip_id?.toString() || 'N/A',
+        tracking_code: cashPaymentInfo.summary?.tracking_code || 'N/A',
+        bike_number: cashPaymentInfo.summary?.bike_number || 'N/A',
+        user_name: cashPaymentInfo.user?.name || 'N/A',
+        start_time: cashPaymentInfo.summary?.start_time,
+        end_time: cashPaymentInfo.summary?.end_time,
+        duration: cashPaymentInfo.summary?.duration,
+        price: cashPaymentInfo.summary?.price,
+        status: 'completed',
+        payment_type: 'cash',
+      };
+      setCurrentTrip(formattedTrip);
+      setCashPaymentInfo(null);
+      setShowReceipt(true);
+      toast({
+        title: 'Cash Payment Confirmed',
+        description: 'Trip marked as completed.',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Network error confirming cash payment',
+        variant: 'destructive',
+      });
+    }
+
+    setIsConfirmingCash(false);
+  };
+
   // Defensive: only map stations with valid coordinates
   // Add active bikes as map pins
   const activeBikeLocations: StationMapLocation[] = bikes
@@ -534,8 +612,27 @@ const StaffPanel = () => {
                 </Button>
               </div>
               {endTripError && <p className="mt-2 text-sm text-error">{endTripError}</p>}
+
+              {cashPaymentInfo && (
+                <div className="mt-4 p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700">
+                  <h4 className="font-medium text-sm mb-1">Cash Payment Pending</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {cashPaymentInfo.user?.name || 'Rider'} owes ETB {cashPaymentInfo.amount} for trip {cashPaymentInfo.summary?.tracking_code || cashPaymentInfo.trip_id}.
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Collect cash from the rider, then confirm below.
+                  </p>
+                  <Button
+                    onClick={handleConfirmCashPayment}
+                    disabled={isConfirmingCash}
+                    className="w-full bg-greenprimary hover:bg-greenprimary/90"
+                  >
+                    {isConfirmingCash ? 'Confirming...' : 'Confirm Cash Payment'}
+                  </Button>
+                </div>
+              )}
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <h3 className="font-medium mb-2">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-2">
