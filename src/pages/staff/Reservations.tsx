@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ListCheck, Filter, Search, CheckCircle } from 'lucide-react';
 import { CustomPagination } from '@/components/ui/custom-pagination';
+import { API_BASE_URL } from "@/lib/config";
 
 const Reservations = () => {
   const { toast } = useToast();
@@ -20,7 +21,7 @@ const Reservations = () => {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/bikes/1/reserved', {
+        const response = await fetch(`${API_BASE_URL}/api/bikes/1/reserved`, {
           credentials: 'include',
           headers: {
             'Accept': 'application/json',

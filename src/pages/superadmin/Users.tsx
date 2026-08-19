@@ -7,6 +7,7 @@ import { Search, UserX, Shield, Mail, Phone, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from "@/lib/config";
 
 const Users = () => {
   const { toast } = useToast();
@@ -20,7 +21,7 @@ const Users = () => {
 
   // Fetch users from backend
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/superadmin/all_users', {
+    fetch(`${API_BASE_URL}/api/superadmin/all_users`, {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',

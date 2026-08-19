@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { getUserById } from '@/data/mockData';
-import { Bike as BikeIcon, MapPin, Search, Wrench, Car } from 'lucide-react';
+import { Bike as BikeIcon, MapPin, Search, Wrench } from 'lucide-react';
 import StationMap, { StationMapLocation } from '@/components/StationMap';
 import { endTrip } from "@/api/staff";
 import TripReceiptStaff from '@/components/TripReceiptStaff';
+import { API_BASE_URL } from "@/lib/config";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ const StaffPanel = () => {
   const [currentTrip, setCurrentTrip] = useState<any>(null);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/stations', {
+    fetch(`${API_BASE_URL}/api/stations`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
@@ -52,7 +53,7 @@ const StaffPanel = () => {
   }, []);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/bikes', {
+    fetch(`${API_BASE_URL}/api/all_bikes`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
@@ -60,7 +61,7 @@ const StaffPanel = () => {
         if (!res.ok) return;
         try {
           const data = await res.json();
-          const bikesArr = Array.isArray(data) ? data : data.bikes || [];
+          const bikesArr = Array.isArray(data) ? data : data.bikes || data.data || [];
           setBikes(bikesArr);
         } catch {
           setBikes([]);
@@ -69,7 +70,7 @@ const StaffPanel = () => {
   }, []);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/reservations', {
+    fetch(`${API_BASE_URL}/api/reservations`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
@@ -87,7 +88,7 @@ const StaffPanel = () => {
 
   // Fetch active bikes from backend API
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/bikes/1/available', {
+    fetch(`${API_BASE_URL}/api/bikes/1/available`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
@@ -108,10 +109,12 @@ const StaffPanel = () => {
       });
   }, []);
 
-  const stationBikes = bikes.filter(bike => bike.station_id === selectedStation?.id);
-  const filteredBikes = stationBikes.filter(bike => 
-    bike.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    bike.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const stationBikes = bikes.filter(bike =>
+    bike.station_id === selectedStation?.id || bike.station_name === selectedStation?.name
+  );
+  const filteredBikes = stationBikes.filter(bike =>
+    (bike.model || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(bike.bike_number ?? bike.id ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const handleVerifyCode = async () => {
@@ -149,7 +152,7 @@ const StaffPanel = () => {
       // Debug: log payload before sending
       console.log('Sending payload:', payload);
 
-      const res = await fetch('http://127.0.0.1:8000/api/staff/verify-trip', {
+      const res = await fetch(`${API_BASE_URL}/api/staff/verify-trip`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -186,6 +189,18 @@ const StaffPanel = () => {
           description: typeof data === 'string' ? data : (data?.message || 'Trip verified successfully'),
           variant: 'default',
         });
+
+        if (data?.bike) {
+          setBikeDetails({
+            id: data.bike.bike_number ?? data.bike.id,
+            model: data.bike.model,
+            brand: data.bike.brand,
+            status: data.bike.status,
+            userName: data.user?.name || 'Unknown rider',
+            userId: data.user?.id ?? 'N/A',
+            reservation: { code: data.trip?.tracking_code ?? codeToCheck },
+          });
+        }
       }
     } catch (error) {
       setErrorMessage('Network error. Please try again.');
@@ -243,7 +258,7 @@ const StaffPanel = () => {
       // Debug: log payload before sending
       console.log('Sending end-trip payload:', payload);
 
-      const res = await fetch('http://127.0.0.1:8000/api/staff/end-trip', {
+      const res = await fetch(`${API_BASE_URL}/api/staff/end-trip`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -288,7 +303,7 @@ const StaffPanel = () => {
           const checkPaymentStatus = async () => {
             if (!isPolling) return;
             try {
-              const response = await fetch(`http://127.0.0.1:8000/api/check_payment_status/${tripId}`, {
+              const response = await fetch(`${API_BASE_URL}/api/check_payment_status/${tripId}`, {
                 credentials: 'include',
                 headers: { 'Accept': 'application/json' },
               });
@@ -457,12 +472,12 @@ const StaffPanel = () => {
                   <p className="font-medium">{bikeDetails.model}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Category</p>
-                  <p className="font-medium capitalize">{bikeDetails.category}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Brand</p>
+                  <p className="font-medium capitalize">{bikeDetails.brand}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                  <p className="font-medium capitalize">{bikeDetails.status.replace('-', ' ')}</p>
+                  <p className="font-medium capitalize">{bikeDetails.status?.replace('_', ' ')}</p>
                 </div>
               </div>
               
@@ -590,20 +605,16 @@ const StaffPanel = () => {
                         <p className="font-medium">{bike.model}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">ID: {bike.id}</p>
                       </div>
-                      {bike.category === 'scooter' ? (
-                        <Car className="text-graydark dark:text-gray-300" size={20} />
-                      ) : (
-                        <BikeIcon className="text-graydark dark:text-gray-300" size={20} />
-                      )}
+                      <BikeIcon className="text-graydark dark:text-gray-300" size={20} />
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs">{bike.category}</span>
+                      <span className="text-xs">{bike.brand}</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold
                         ${bike.status === 'available' ? 'bg-greenprimary/20 text-greenprimary dark:bg-greenprimary/40 dark:text-white' : 
-                          bike.status === 'in-use' ? 'bg-greenaccent/30 text-graydark dark:bg-greenaccent/50 dark:text-white' : 
+                          bike.status === 'in_use' ? 'bg-greenaccent/30 text-graydark dark:bg-greenaccent/50 dark:text-white' :
                           'bg-error/20 text-error dark:bg-error/50 dark:text-white'}`}
                       >
-                        {bike.status.replace('-', ' ')}
+                        {(bike.status || '').replace('_', ' ')}
                       </span>
                     </div>
                   </li>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin, X } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 interface StationFormData {
   name: string;
@@ -47,7 +48,7 @@ const CreateStation = () => {
 
     try {
       // Make an API call to create the station
-      const response = await fetch('http://127.0.0.1:8000/api/superadmin/add_stations', {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/add_stations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

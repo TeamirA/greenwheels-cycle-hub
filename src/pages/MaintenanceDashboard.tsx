@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import SummaryDialog from '@/components/SummaryDialog';
+import { API_BASE_URL } from "@/lib/config";
 
 interface MaintenanceDashboardProps {
   reportSource: 'user' | 'staff' | 'maintenance';
@@ -55,7 +56,7 @@ const MaintenanceDashboard = ({ reportSource, initialReports = [], loading = fal
 
   useEffect(() => {
     // Fetch maintenance reports from backend
-    fetch('http://127.0.0.1:8000/api/bike/maintenance', {
+    fetch(`${API_BASE_URL}/api/bike/maintenance`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
@@ -175,7 +176,7 @@ const MaintenanceDashboard = ({ reportSource, initialReports = [], loading = fal
       return;
     }
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/maintenance/resolve-issue/${maintenanceId}?id=${reportId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/maintenance/resolve-issue/${maintenanceId}?id=${reportId}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -267,7 +268,7 @@ const MaintenanceDashboard = ({ reportSource, initialReports = [], loading = fal
     const aproduct = report.maintenance_id; // Use the backend maintenance_id as 'aproduct'
     console.log('Starting work for aproduct (backend maintenance_id):', aproduct);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/maintenance/under-review/${aproduct}`, {
+      const response = await fetch(`${API_BASE_URL}/api/maintenance/under-review/${aproduct}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -539,7 +540,7 @@ const MaintenanceDashboard = ({ reportSource, initialReports = [], loading = fal
             }}
             onConfirm={async () => {
               try {
-                const response = await fetch('http://127.0.0.1:8000/api/maintenance/add_issue_type', {
+                const response = await fetch(`${API_BASE_URL}/api/maintenance/add_issue_type`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

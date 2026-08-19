@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import axios from 'axios'; // Add axios for API calls
 import { User, UserRole } from '@/types'; // Remove AuthState import to avoid conflict
+import { API_BASE_URL } from "@/lib/config";
 
 export interface AuthState {
   user: User | null;
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Attempting login...');
       // Send login request to the backend
-      const response = await axios.post('http://127.0.0.1:8000/api/login', { ep, password }, { withCredentials: true });
+      const response = await axios.post(`${API_BASE_URL}/api/login`, { ep, password }, { withCredentials: true });
       console.log('Login response:', response.data);
 
       // Destructure the response to get role and token

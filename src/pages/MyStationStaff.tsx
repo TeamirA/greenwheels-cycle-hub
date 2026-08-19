@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Users, Wrench, Loader2, Bike } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 interface StaffMember {
   id: number;
@@ -77,7 +78,7 @@ const MyStationStaff = () => {
         }
 
         // Fetch staff data
-        const staffResponse = await fetch(`http://127.0.0.1:8000/api/admin/team/station/${stationId}`, {
+        const staffResponse = await fetch(`${API_BASE_URL}/api/admin/team/station/${stationId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -85,7 +86,7 @@ const MyStationStaff = () => {
         });
 
         // Fetch available bikes
-        const bikesResponse = await fetch(`http://127.0.0.1:8000/api/bikes/${stationId}/available`, {
+        const bikesResponse = await fetch(`${API_BASE_URL}/api/bikes/${stationId}/available`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',

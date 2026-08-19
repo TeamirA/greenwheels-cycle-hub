@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 interface TripSummary {
   bike_number: string;
@@ -50,7 +51,7 @@ const TripReceipt = ({ tripId, onClose }: TripReceiptProps) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch(`http://127.0.0.1:8000/api/check_payment_status/${tripId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/check_payment_status/${tripId}`, {
           method: 'GET',
           credentials: 'include',
           headers: {

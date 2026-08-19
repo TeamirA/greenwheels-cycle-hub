@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from "@/lib/config";
 
 const AdminRevenue = () => {
   const { toast } = useToast();
@@ -27,7 +28,7 @@ const AdminRevenue = () => {
       try {
         setLoading(true);
         // TODO: Replace with actual API call
-        // const response = await fetch(`http://127.0.0.1:8000/api/revenue/${timeRange}`, {
+        // const response = await fetch(`${API_BASE_URL}/api/revenue/${timeRange}`, {
         //   headers: {
         //     'Authorization': `Bearer ${authState.token}`,
         //     'Accept': 'application/json',

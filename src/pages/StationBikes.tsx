@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Bike, Loader2, AlertCircle, CheckCircle2, Clock, ChevronDown, Filter } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +38,7 @@ const StationBikes = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('http://127.0.0.1:8000/api/stations/2/bikes');
+        const response = await fetch(`${API_BASE_URL}/api/stations/2/bikes`);
         const data = await response.json();
         
         const bikesData = data.bikes || [];

@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { API_BASE_URL } from "@/lib/config";
 
 interface AvailableBike {
   id: number;
@@ -52,7 +53,7 @@ const AvailableBikes = () => {
           throw new Error('No station ID found for user');
         }
         console.log(`Fetching bikes for ${authState.role} user from station ${stationId}`);
-        response = await fetch(`http://127.0.0.1:8000/api/bikes/${stationId}/available`, {
+        response = await fetch(`${API_BASE_URL}/api/bikes/${stationId}/available`, {
           credentials: 'include',
           headers: { 
             'Accept': 'application/json',
@@ -61,7 +62,7 @@ const AvailableBikes = () => {
         });
       } else {
         // For regular users: fetch all available bikes
-        response = await fetch('http://127.0.0.1:8000/api/bike/available', {
+        response = await fetch(`${API_BASE_URL}/api/bike/available`, {
           credentials: 'include',
           headers: { 
             'Accept': 'application/json',

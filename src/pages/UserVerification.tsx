@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL } from "@/lib/config";
 
 // Define NotificationContext locally with correct type to avoid TS errors
 const NotificationContext = React.createContext<{ setVerificationCount?: (count: number) => void }>({});
@@ -52,7 +53,7 @@ const UserVerification = () => {
   const fetchVerificationRequests = async () => {
     try {
       console.log('Fetching verification requests...');
-      const response = await fetch('http://127.0.0.1:8000/api/inprogress-ids', {
+      const response = await fetch(`${API_BASE_URL}/api/inprogress-ids`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -141,7 +142,7 @@ const UserVerification = () => {
 
       console.log(`Handling verification for ID ${requestId} with action ${action}`);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/superadmin/verify_id/${requestId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/verify_id/${requestId}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -209,7 +210,7 @@ const UserVerification = () => {
         isAuthenticated: authState.isAuthenticated
       });
 
-      const response = await fetch(`http://127.0.0.1:8000/api/superadmin/reject_id/${rejectionDialog.requestId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/reject_id/${rejectionDialog.requestId}`, {
         method: 'POST',
         credentials: 'include',
         headers: {

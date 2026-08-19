@@ -8,6 +8,7 @@ import StationMap, { StationMapLocation } from '@/components/StationMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from "@/lib/config";
 
 const StationManagement = () => {
   const { toast } = useToast();
@@ -34,7 +35,7 @@ const StationManagement = () => {
     const fetchStations = async () => {
       try {
         console.log('Fetching stations...');
-        const response = await fetch('http://127.0.0.1:8000/api/stations', {
+        const response = await fetch(`${API_BASE_URL}/api/stations`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',
@@ -99,7 +100,7 @@ const StationManagement = () => {
         setBikesLoading(true);
         try {
           console.log('Fetching bikes for station:', selectedStation.name);
-          const response = await fetch(`http://127.0.0.1:8000/api/stations/${selectedStation.id}/bikes`, {
+          const response = await fetch(`${API_BASE_URL}/api/stations/${selectedStation.id}/bikes`, {
             headers: {
               'Authorization': `Bearer ${authState.token}`,
               'Accept': 'application/json',
@@ -210,7 +211,7 @@ const StationManagement = () => {
     if (!selectedStation) return;
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/superadmin/update_station/${selectedStation.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/update_station/${selectedStation.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

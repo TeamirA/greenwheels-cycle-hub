@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { CustomPagination } from '@/components/ui/custom-pagination';
+import { API_BASE_URL } from "@/lib/config";
 
 const MaintenanceIssues = () => {
   const { toast } = useToast();
@@ -43,7 +44,7 @@ const MaintenanceIssues = () => {
 
   // Update fetch maintenance reports
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/bike/maintenance', {
+    fetch(`${API_BASE_URL}/api/bike/maintenance`, {
       credentials: 'include',
       headers: getAuthHeaders(),
     })
@@ -118,7 +119,7 @@ const MaintenanceIssues = () => {
 
   // Update fetch maintenance issue types
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/maintenance_type', {
+    fetch(`${API_BASE_URL}/api/maintenance_type`, {
       credentials: 'include',
       headers: getAuthHeaders(),
     })
@@ -147,7 +148,7 @@ const MaintenanceIssues = () => {
 
   const handleNewIssue = async (data: any) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/staff/report-issue', {
+      const response = await fetch(`${API_BASE_URL}/api/staff/report-issue`, {
         method: 'POST',
         credentials: 'include',
         headers: getAuthHeaders(),
@@ -188,7 +189,7 @@ const MaintenanceIssues = () => {
       form.reset();
 
       // Refresh the maintenance reports after successful submission
-      const updatedResponse = await fetch('http://127.0.0.1:8000/api/bike/maintenance', {
+      const updatedResponse = await fetch(`${API_BASE_URL}/api/bike/maintenance`, {
         credentials: 'include',
         headers: getAuthHeaders(),
       });
@@ -219,7 +220,7 @@ const MaintenanceIssues = () => {
 
   const handleNewIssueType = async (data: any) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/maintenance/add_issue_type', {
+      const response = await fetch(`${API_BASE_URL}/api/maintenance/add_issue_type`, {
         method: 'POST',
         credentials: 'include',
         headers: getAuthHeaders(),
@@ -241,7 +242,7 @@ const MaintenanceIssues = () => {
       }
 
       // Refresh issue types
-      const updatedResponse = await fetch('http://127.0.0.1:8000/api/maintenance_type', {
+      const updatedResponse = await fetch(`${API_BASE_URL}/api/maintenance_type`, {
         credentials: 'include',
         headers: getAuthHeaders(),
       });

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Bike, Filter, ArrowLeft } from 'lucide-react';
 import BikeStatusBadge from '@/components/ui/bike-status-badge';
+import { API_BASE_URL } from "@/lib/config";
 
 // Extend BikeType to allow station_name for backend compatibility
 interface BikeTypeWithStationName extends BikeTypeBase {
@@ -32,7 +33,7 @@ const BikeFleet = () => {
   useEffect(() => {
     const fetchBikes = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/all_bikes');
+        const response = await fetch(`${API_BASE_URL}/api/all_bikes`);
         if (!response.ok) {
           throw new Error('Failed to fetch bikes');
         }

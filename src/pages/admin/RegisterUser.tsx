@@ -8,6 +8,7 @@ import { UserPlus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { API_BASE_URL } from "@/lib/config";
 
 interface UserFormData {
   first_name: string;
@@ -70,7 +71,7 @@ const RegisterUser = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://127.0.0.1:8000/api/stations', {
+        const response = await fetch(`${API_BASE_URL}/api/stations`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -168,7 +169,7 @@ const RegisterUser = () => {
       }
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://127.0.0.1:8000/api/superadmin/add_station_admins', {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/add_station_admins`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

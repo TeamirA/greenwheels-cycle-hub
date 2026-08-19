@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, UserPlus, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Station } from '@/types';
+import { API_BASE_URL } from "@/lib/config";
 
 interface StaffFormData {
   first_name: string;
@@ -62,7 +63,7 @@ const RegisterStationStaff = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://127.0.0.1:8000/api/stations', {
+        const response = await fetch(`${API_BASE_URL}/api/stations`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -207,8 +208,8 @@ const RegisterStationStaff = () => {
 
       // Choose endpoint based on role
       const apiUrl = staffToConfirm.role === 'staff' 
-        ? 'http://127.0.0.1:8000/api/admin/add_staff'
-        : 'http://127.0.0.1:8000/api/admin/add_maintenance';
+        ? `${API_BASE_URL}/api/admin/add_staff`
+        : `${API_BASE_URL}/api/admin/add_maintenance`;
 
       // Set a shorter timeout (15 seconds instead of 30)
       const controller = new AbortController();

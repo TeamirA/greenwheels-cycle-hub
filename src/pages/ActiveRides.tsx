@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import BikeTracker from '../components/BikeTracker';
 import TrackingStats from '../components/TrackingStats';
 import { Input } from '@/components/ui/input';
+import { API_BASE_URL } from "@/lib/config";
 
 interface ActiveBike {
   id: number;
@@ -51,7 +52,7 @@ const ActiveRides = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ActiveBike[]>([]);
   const [bikeLocations, setBikeLocations] = useState<Record<string, BikeLocation>>({});
-  const [useMockData, setUseMockData] = useState(true);
+  const [useMockData, setUseMockData] = useState(false);
 
   const generateMockLocation = useCallback((stationId: string): BikeLocation => {
     return {
@@ -65,7 +66,7 @@ const ActiveRides = () => {
   const fetchRealBikeLocation = useCallback(async (tripId: number, bikeNumber: string) => {
     try {
       console.log('Fetching real location for bike:', bikeNumber);
-      const response = await fetch(`http://127.0.0.1:8000/api/latest_location/${tripId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/latest_location/${tripId}`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json'
@@ -122,7 +123,7 @@ const ActiveRides = () => {
   const fetchActiveBikes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/bike/active', {
+      const response = await fetch(`${API_BASE_URL}/api/bike/active`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json'
@@ -272,7 +273,7 @@ const ActiveRides = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <Button
                 variant={useMockData ? 'default' : 'outline'}
                 size="sm"

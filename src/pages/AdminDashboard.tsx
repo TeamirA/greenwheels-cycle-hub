@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { MaintenanceReport } from '@/types';
+import { API_BASE_URL } from "@/lib/config";
 
 const AdminDashboard = () => {
   const { authState } = useAuth();
@@ -47,7 +48,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         console.log('Fetching maintenance reports...');
-        const response = await fetch('http://127.0.0.1:8000/api/bike/maintenance', {
+        const response = await fetch(`${API_BASE_URL}/api/bike/maintenance`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',
@@ -128,7 +129,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         console.log('Fetching bike summary...');
-        const response = await fetch('http://127.0.0.1:8000/api/superadmin/revenue/bike-summary', {
+        const response = await fetch(`${API_BASE_URL}/api/superadmin/revenue/bike-summary`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',
@@ -215,7 +216,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         console.log('Fetching reservations...');
-        const response = await fetch('http://127.0.0.1:8000/api/bike/reserved', {
+        const response = await fetch(`${API_BASE_URL}/api/bike/reserved`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',

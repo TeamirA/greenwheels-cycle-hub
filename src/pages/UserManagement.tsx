@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Mail, Phone, Shield, Calendar } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 const UserManagement = () => {
   const { toast } = useToast();
@@ -64,7 +65,7 @@ const UserManagement = () => {
       
       try {
         console.log('Fetching team members...');
-        const response = await fetch('http://127.0.0.1:8000/api/superadmin/all_teams', {
+        const response = await fetch(`${API_BASE_URL}/api/superadmin/all_teams`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -229,7 +230,7 @@ const UserManagement = () => {
     if (!editingUser) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/superadmin/team/${editingUser.id}/update`, {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/team/${editingUser.id}/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -287,7 +288,7 @@ const UserManagement = () => {
       try {
         // Delete each selected user one by one
         for (const userId of selectedUsers) {
-          const response = await fetch(`http://127.0.0.1:8000/api/admin/delete_account/${userId}`, {
+          const response = await fetch(`${API_BASE_URL}/api/admin/delete_account/${userId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -315,7 +316,7 @@ const UserManagement = () => {
           setIsLoading(true);
           
           try {
-            const response = await fetch('http://127.0.0.1:8000/api/superadmin/all_teams', {
+            const response = await fetch(`${API_BASE_URL}/api/superadmin/all_teams`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',

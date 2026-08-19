@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from "@/lib/config";
 
 interface ForgotPasswordFormData {
   email: string;
@@ -24,7 +25,7 @@ const ForgotPassword = () => {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/password/forgot', {
+      const response = await fetch(`${API_BASE_URL}/api/password/forgot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

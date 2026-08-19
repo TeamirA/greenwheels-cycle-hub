@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BikeCategory, BikeStatus, Station } from '@/types';
 import { Bike, Plus, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { API_BASE_URL } from "@/lib/config";
 
 interface BikeFormData {
   model: string;
@@ -58,7 +59,7 @@ const RegisterBike = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch('http://127.0.0.1:8000/api/stations', {
+        const response = await fetch(`${API_BASE_URL}/api/stations`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -135,7 +136,7 @@ const RegisterBike = () => {
     if (!bikeToConfirm) return;
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/superadmin/add_bikes', {
+      const response = await fetch(`${API_BASE_URL}/api/superadmin/add_bikes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

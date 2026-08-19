@@ -1,10 +1,11 @@
 // src/api/staff.ts
+import { API_BASE_URL } from "@/lib/config";
 
 export async function endTrip(tracking_code: string) {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No authentication token found');
 
-  const response = await fetch('http://127.0.0.1:8000/api/staff/end-trip', {
+  const response = await fetch(`${API_BASE_URL}/api/staff/end-trip`, {
     method: 'POST',
     credentials: 'include',
     headers: {

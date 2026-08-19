@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { FileText, Download, Filter, BarChart2, Check, Clock, AlertTriangle, Bike, MapPin } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 const Reports = () => {
   const { toast } = useToast();
@@ -65,7 +66,7 @@ const Reports = () => {
     const fetchMaintenanceReports = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/bike/maintenance?page=${page}&limit=${PAGE_SIZE}`);
+        const response = await fetch(`${API_BASE_URL}/api/bike/maintenance?page=${page}&limit=${PAGE_SIZE}`);
         if (response.status === 404) {
           // No maintenance endpoint or no data, treat as empty but not error
           setFilteredReports([]);

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, DollarSign, TrendingUp, Building } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { API_BASE_URL } from "@/lib/config";
 
 interface StationRevenue {
   station_id: number;
@@ -27,7 +28,7 @@ const StationRevenue = () => {
   const fetchRevenueData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/station-revenue', {
+      const response = await fetch(`${API_BASE_URL}/api/station-revenue`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json',

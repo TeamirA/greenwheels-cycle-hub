@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const EditProfile = () => {
 
   useEffect(() => {
     // Fetch user profile data
-    fetch('http://127.0.0.1:8000/api/user/profile', {
+    fetch(`${API_BASE_URL}/api/user/profile`, {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
@@ -55,7 +56,7 @@ const EditProfile = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/update-profile/${authState.user?.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/update-profile/${authState.user?.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {

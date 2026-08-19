@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Bike, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/config";
 
 const Login = () => {
   const { authState, setAuthState } = useAuth(); // Get setAuthState from context
@@ -24,7 +25,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/login', 
+      const response = await axios.post(`${API_BASE_URL}/api/login`, 
         { ep, password }, 
         { 
           withCredentials: true,

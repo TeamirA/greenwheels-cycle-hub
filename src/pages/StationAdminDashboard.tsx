@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { API_BASE_URL } from "@/lib/config";
 
 const StationAdminDashboard = () => {
   const { toast } = useToast();
@@ -24,7 +25,7 @@ const StationAdminDashboard = () => {
     const fetchStationStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/api/stations/${authState.user?.stationId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/stations/${authState.user?.stationId}`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',
@@ -68,7 +69,7 @@ const StationAdminDashboard = () => {
     const fetchRevenueData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/api/revenue/station/${authState.user?.stationId}?timeRange=${timeRange}`, {
+        const response = await fetch(`${API_BASE_URL}/api/revenue/station/${authState.user?.stationId}?timeRange=${timeRange}`, {
           headers: {
             'Authorization': `Bearer ${authState.token}`,
             'Accept': 'application/json',

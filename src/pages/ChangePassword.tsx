@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/config";
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const ChangePassword = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/change-password',
+        `${API_BASE_URL}/api/change-password`,
         {
           current_password: currentPassword,
           new_password: newPassword,
