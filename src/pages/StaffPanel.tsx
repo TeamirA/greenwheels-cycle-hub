@@ -307,7 +307,7 @@ const StaffPanel = () => {
             try {
               const response = await fetch(`${API_BASE_URL}/api/check_payment_status/${tripId}`, {
                 credentials: 'include',
-                headers: { 'Accept': 'application/json' },
+                headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
               });
               if (response.ok) {
                 const paymentData = await response.json();
