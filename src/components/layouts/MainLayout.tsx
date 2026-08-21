@@ -1,11 +1,11 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  LayoutDashboard, Bike, MapPin, Users, FileText, 
+import {
+  LayoutDashboard, Bike, MapPin, Users, FileText,
   LogOut, Menu, X, ChevronDown, ChevronLeft, ChevronRight,
   ListCheck, Wrench, UserPlus, PlusCircle, Sun, Moon, Car, ShieldAlert,
-  UserCheck
+  UserCheck, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -160,6 +160,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                         <div className={`px-4 py-2 text-sm border-b ${darkMode ? 'text-gray-300 border-gray-700' : 'text-graydark border-gray-200'}`}>
                           Logged in as <span className="font-semibold">{authState.role}</span>
                         </div>
+                        {(authState.role === 'admin' || authState.role === 'staff' || authState.role === 'maintenance') && (
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              navigate('/edit-profile');
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-graylight text-graydark'}`}
+                          >
+                            <User size={16} className="mr-2" /> Edit Profile
+                          </button>
+                        )}
                         {(authState.role === 'admin' || authState.role === 'staff' || authState.role === 'maintenance') && (
                           <button
                             onClick={() => {

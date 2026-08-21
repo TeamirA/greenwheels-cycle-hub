@@ -29,6 +29,7 @@ import StationAdminDashboard from "./pages/StationAdminDashboard";
 import RegisterStationStaff from "./pages/RegisterStationStaff";
 import MaintenanceDashboard from "./pages/MaintenanceDashboard";
 import ChangePassword from "./pages/ChangePassword";
+import EditProfile from "./pages/EditProfile";
 import UserVerification from '@/pages/UserVerification';
 import ForgotPassword from '@/pages/ForgotPassword';
 import MyStationStaff from '@/pages/MyStationStaff';
@@ -298,17 +299,29 @@ const App = () => (
             />
             
             {/* Change Password Route */}
-            <Route 
-              path="/change-password" 
+            <Route
+              path="/change-password"
               element={
                 <ProtectedRoute>
                   <MainLayout>
                     <ChangePassword />
                   </MainLayout>
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
+            {/* Edit Profile Route */}
+            <Route
+              path="/edit-profile"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <EditProfile />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+
             {/* User Verification Route */}
             <Route 
               path="/user-verification" 

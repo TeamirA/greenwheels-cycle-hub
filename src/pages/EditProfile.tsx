@@ -20,14 +20,19 @@ const EditProfile = () => {
     email: '',
     phone: '',
   });
+  const [userId, setUserId] = useState<number | string | null>(authState.user?.id ?? null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch user profile data
-    fetch(`${API_BASE_URL}/api/user/profile`, {
+    // Fetch the logged-in user's own profile data. authState.user is not
+    // populated for staff/admin/maintenance logins (the backend's /api/login
+    // response has no `user` field), so the id used for the save call below
+    // comes from this response instead of authState.user?.id.
+    fetch(`${API_BASE_URL}/api/user/info`, {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
+        'Authorization': `Bearer ${authState.token}`,
       },
     })
       .then(async res => {
@@ -35,12 +40,16 @@ const EditProfile = () => {
           throw new Error('Failed to fetch profile data');
         }
         const data = await res.json();
+        const user = data.user || {};
         setFormData({
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          email: data.email || '',
-          phone: data.phone || '',
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          email: user.email || '',
+          phone: user.phone || '',
         });
+        if (user.id) {
+          setUserId(user.id);
+        }
       })
       .catch(error => {
         toast({
@@ -53,15 +62,26 @@ const EditProfile = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!userId) {
+      toast({
+        title: 'Error',
+        description: 'Could not determine your account id. Please reload the page and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/update-profile/${authState.user?.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/update-profile/${userId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': `Bearer ${authState.token}`,
         },
         body: JSON.stringify(formData),
       });
